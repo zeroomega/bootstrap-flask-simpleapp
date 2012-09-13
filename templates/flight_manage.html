@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}航班信息管理系统{% endblock %}
+
+{% block User %}
+{{ msg['username'] }}
+{% endblock %}
+
+{% block main %}
+ 
+    <div class="span9">
+      <!-- Main hero unit for a primary marketing message or call to action --> 
+      <div class="hero-unit">
+        <a class="btn btn-primary btn-medium">新增</a>
+        <table border="1">
+          <tr>
+            <th>航班名称</th>
+            <th>始发地</th>
+            <th>目的地</th>
+            <th>起飞时间</th>
+            <th>飞行时间</th>
+            <th>着陆时间</th>
+            <th>价格</th>
+            <th>余票</th>
+            <th>操作</th>
+          </tr>
+          <tr>
+            <td>CZ001</td>
+            <td>武汉</td>
+            <td>北京</td>
+            <td>
+              <table>
+                <td>15</td>
+                <td>:</td>
+                <td>00</td>
+              </table>
+            </td>
+            <td>
+              <table>
+                <td>2</td>
+                <td>:</td>
+                <td>00</td>
+              </table>
+            </td>
+            <td>
+              <table>
+                <td>17</td>
+                <td>:</td>
+                <td>00</td>
+              </table>
+            </td>
+            <td>500RMB</td>
+            <td>150</td>
+            <td>
+              <table>
+                <td>
+                  <a class="btn btn-primary btn-mini" href="#">编辑</a>
+                </td>
+                <td>
+                  <a class="btn btn-primary btn-mini" href="#">删除</a>
+                </td>
+                <td>
+                  <a class="btn btn-primary btn-mini" href="#">售票</a>
+                </td>
+              </table>
+
+            </td>
+          </tr>
+        </table>            
+        <a class="btn btn-primary btn-medium">新增</a>
+      </div>
+     </div>
+
+{% endblock %}

@@ -1,0 +1,185 @@
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!-- Consider adding an manifest.appcache: h5bp.com/d/Offline -->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+
+  <!-- Use the .htaccess and remove these lines to avoid edge case issues.
+       More info: h5bp.com/b/378 -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>{% block title %}{% endblock %} --Flight Management System</title>
+  <meta name="description" content="This is a Flight Management System">
+  <meta name="author" content="Haowei&Wenhao">
+
+  <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- Place favicon.ico and apple-touch-icon.png in the root directory: mathiasbynens.be/notes/touch-icons -->
+  <!-- for simplicity (flask) we are going to leave it in static, though, boo!  Gregg Lind -->
+  <link rel="shortcut icon" href="/static/favicon.ico">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+
+  <!-- CSS: implied media=all -->
+  <!-- CSS concatenated and minified via ant build script-->
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/bootstrap-responsive.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/outer.css">
+  <!-- end CSS-->
+
+  <!-- More ideas for your <head> here: h5bp.com/d/head-Tips -->
+
+  <!-- All JavaScript at the bottom, except for Modernizr / Respond.
+       Modernizr enables HTML5 elements & feature detects; Respond is a polyfill for min/max-width CSS3 Media Queries
+       For optimal performance, use a custom Modernizr build: www.modernizr.com/download/ -->
+  <script src="/static/js/libs/modernizr-2.0.6.min.js"></script>
+</head>
+
+<body>
+
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-block alert-error fade in">
+                    <a class="close" data-dismiss="alert" href="#">×</a>
+                      {{ message }}
+                </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+
+    <div class="navbar navbar-fixed-top"> 
+      <div class="navbar-inner"> 
+        <div class="container"> 
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"> 
+            <span class="icon-bar"></span> 
+            <span class="icon-bar"></span> 
+            <span class="icon-bar"></span> 
+          </a> 
+          <a class="brand" href="#">航班管理系统</a> 
+          <div class="nav-collapse"> 
+            <ul class="nav"> 
+              <li class="active">
+                {% if msg %}
+                  {% if msg.is_login %}
+                    <a href="/home">首页</a>
+                  {% else %}
+                    <a href="/">首页</a>
+                  {% endif %}
+                {% else %}
+                  <a href="/">首页</a>
+                {% endif %}
+              </li> 
+              <li><a href="/about/">关于</a></li> 
+              <!-- Contact is not necessary
+              <li><a href="#contact">Contact</a></li>
+              -->
+              <li>
+                {% if msg %}
+                  {% if msg.is_login %}
+                    <a href="/logout/">登出</a>
+                  {% else %}
+                    <a href="/login/">登录</a>
+                  {% endif %}
+                {% endif %}
+              </li>
+              {%if msg %}
+                {% if msg.is_login == False%}
+                <li><a href="/users/create/">注册</a></li>
+                {% endif %}
+              {% else %}
+                <li><a href="/users/create/">注册</a></li>
+              {% endif %}
+              <li><a href="#">
+              {% block User %}
+              {% endblock %}
+              </a></li>
+            </ul> 
+          </div><!--/.nav-collapse --> 
+        </div> 
+      </div> 
+    </div> 
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+  	<div class="span3">
+  	  <div class="well sidebar-nav">
+  	    <ul class="nav nav-list">
+          {% if msg %}
+            {% if msg.is_login %}
+              {% if msg.is_admin %}
+              {# Login User is an Admin #}
+              		<li class="nav-header">航班管理</li>
+    		          <li><a href="/flight_manage/">航班信息管理</a></li>
+              		<li><a href="#">售票</a></li>
+                  <li><a href="#">取票</a></li>		
+              		<li class="nav-header">乘客管理</li>
+               		<li><a href="#">乘客信息管理</a></li>              		
+                  
+              {% else %}
+              {# Login User is a Guest#}
+                <li class="nav-header"><h2>测试</h2></li>
+              {% endif %}
+          {% else %}
+            {# User is Not Login #}
+              <li class="nav-header"><h2>请登录</h2></li>
+          {% endif %}
+          {% else %}
+          <li class="nav-header"><h2>测试</h2></li>
+        {% endif %}
+  	      </ul>
+  	  </div>
+  	</div>
+	<header>
+          {% block header %}{% endblock %}
+	</header>
+	 {% block main %}{% endblock %}
+      </div>
+      <footer>
+      <hr/>
+      <p>&copy; Bootstrap 2012</p> 
+            {% block footer %}{% endblock %}            
+      </footer>
+    </div> <!-- end of #container -->
+
+
+    <!-- JavaScript at the bottom for fast page loading -->
+
+    <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="/static/js/libs/jquery.min.js"><\/script>')</script>
+    <script defer src="/static/js/libs/bootstrap.min.js"></script>
+
+    <!-- scripts concatenated and minified via ant build script-->
+    <script defer src="/static/js/plugins.js"></script>
+    <script defer src="/static/js/script.js"></script>
+    <!-- end scripts-->
+
+
+    <!-- Change UA-XXXXX-X to be your site's ID -->
+    <!-- Google Analytics is not necessary
+    <script>
+    window._gaq = [['_setAccount','UAXXXXXXXX1'],['_trackPageview'],['_trackPageLoadTime']];
+    Modernizr.load({
+      load: ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js'
+    });
+    </script>
+    -->
+
+
+    <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.
+       chromium.org/developers/how-tos/chrome-frame-getting-started -->
+    <!--[if lt IE 7 ]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+    <![endif]-->
+  
+</body>
+</html>

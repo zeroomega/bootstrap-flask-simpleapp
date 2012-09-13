@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome Inside!{% endblock %}
+
+{% block User %}
+{{ msg['username'] }}
+{% endblock %}
+
+{% block main %}
+ 
+    <div class="span9">
+      <!-- Main hero unit for a primary marketing message or call to action --> 
+      <div class="hero-unit">
+        <p>This is a template for a simple marketing or informational website. It includes a large callout called the hero unit and three supporting pieces of content. Use it as a starting point to create something more unique.</p> 
+        <p><a class="btn btn-primary btn-large">Learn more &raquo;</a></p>
+        <p>Current user: 
+        {{ msg['username'] }}
+        </p>        
+      </div>
+     </div>
+
+{% endblock %}
