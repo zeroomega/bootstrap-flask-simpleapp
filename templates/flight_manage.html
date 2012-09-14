@@ -28,55 +28,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>CZ001</td>
-              <td>武汉</td>
-              <td>北京</td>
-              <td>
-                <!-- <table>
-                  <td>15</td>
-                  <td>:</td>
-                  <td>00</td>
-                </table> -->
-                15:00
-              </td>
-              <td>
-                <!-- <table>
-                  <td>2</td>
-                  <td>:</td>
-                  <td>00</td>
-                </table> -->
-                2:30
-              </td>
-              <td>
-                <!-- <table>
-                  <td>17</td>
-                  <td>:</td>
-                  <td>00</td>
-                </table> -->
-                17:00
-              </td>
-              <td>
-                2012年2月1日
-              </td>
-              <td>500RMB</td>
-              <td>150</td>
-              <td>
-                
-                    <!-- <a class="btn btn-primary btn-mini" href="#">编辑</a>
-                  </td>
-                  <td>
-                    <a class="btn btn-primary btn-mini" href="#">删除</a>
-                  </td>
-                  <td>
-                    <a class="btn btn-primary btn-mini" href="#">售票</a> -->
-                  <div class="btn-group">
-                    <button class="btn btn-mini">编辑</button>
-                    <button class="btn btn-mini">删除</button>
-                    <button class="btn btn-mini">售票</button>
-                  </div>
-              </td>  
-            </tr>
+            
             {% if msg.flightlist != None %}
               {% for item in msg.flightlist %}
                 <tr>
@@ -100,9 +52,10 @@
                   <td>
                     
                       <div class="btn-group">
-                        <button class="btn btn-mini">编辑</button>
-                        <button class="btn btn-mini">删除</button>
-                        <button class="btn btn-mini">售票</button>
+                        <a class="btn btn-mini">编辑</a>
+                        <a class="btn btn-mini" href="/flight_manage_delete?id={{ item.id }}">删除</a>
+                        <a class="btn btn-mini">售票</a>
+                        <a class="btn btn-mini">查看</a>
                       </div>
                   </td>  
                 </tr>

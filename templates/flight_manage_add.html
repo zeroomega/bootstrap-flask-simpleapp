@@ -67,7 +67,15 @@
         {% endif %}
         <span class="help-block">设定机票价格</span>
         <br/>
-        <button type="submit" class="btn">提交</button>
+        <label>座位排数</label>
+        {% if msg.is_post == False %}
+          <input name='frow' type="text" style="width:40px" maxlength="5" placeholder="20"/>排
+        {% else %}
+          <input name='frow' type="text" style="width:40px" value={{ msg.frow }} maxlength="5" placeholder="20"  />排
+        {% endif %}
+        <span class="help-block">设置飞机座位排数，每排9人</span>
+        <br/>
+        <input type="submit" class="btn" value="提交" />
       </form>
      </div>
 

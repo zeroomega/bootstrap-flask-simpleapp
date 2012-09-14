@@ -8,6 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select, and_, or_, not_
 from sqlalchemy.exc import IntegrityError
+from random import randint
 
 DEBUG = True
 
@@ -54,10 +55,6 @@ class Flight_Time(object):
       sthmin = str(self.min)
     return sthour + ':' + sthmin
 
-
-
-
-
 class Flight_Day(object):
   def __init__(self, day, month, year):
     self.day = day
@@ -69,6 +66,25 @@ class Flight_City(object):
     self.id = id
     self.name = name
 
+class Flight_Guest(object):
+  def __init__(self, id, name, email):
+    self.id = id
+    self.name = name
+    self.email = email
+
+  def __repr__(self):
+    return self.name
+
+class Flight_Book_Item(object):
+  def __init__(self, id, gid, fid, sid, tid, rid, ispay, isget):
+    self.id = id
+    self.gid = gid
+    self.fid = fid
+    self.sid = sid
+    self.tid = tid
+    self.rid = rid
+    self.ispay = ispay
+    self.isget = isget
 
 
 engine = create_engine('mysql://bootstrap:boot@127.0.0.1/dbproj?charset=utf8', echo=True, encoding='utf8' )
@@ -86,6 +102,7 @@ db_flight_seat = Table('flight_seat', metadata, autoload=True, autoload_with=eng
 db_booktable = Table('booktable', metadata, autoload=True, autoload_with=engine)
 db_guest = Table('guest', metadata, autoload=True, autoload_with=engine)
 db_tickettable = Table('ticket_table', metadata, autoload=True, autoload_with=engine)
+db_remindtable = Table('remind_table', metadata, autoload=True, autoload_with=engine)
 
 lg_userlist = []
 
@@ -94,7 +111,7 @@ def load_cities():
   retdict = {}
   s = select([db_city])
   result = db_connect.execute(s)
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     #The Database contain City data
     row = result.fetchone()
     while row != None:
@@ -107,6 +124,7 @@ def load_cities():
     #The Database contain no City Data
     return retdict
 
+
 def load_all_flight():
   '''Load all flight info from database, return a list of Flight_Infoc'''
   retlist = []
@@ -114,7 +132,7 @@ def load_all_flight():
   citydic = load_cities()
   s = select([db_flight_info])
   result = db_connect.execute(s)
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     #The Database contain Flight Data
     row = result.fetchone()
     while row != None:
@@ -124,6 +142,7 @@ def load_all_flight():
       curdurtime = Flight_Time(row['dur_min'], row['dur_hour'])
       arrmin = (cursettime.min + curdurtime.min) % 60
       arrhour = (cursettime.hour + curdurtime.hour) + (cursettime.min + curdurtime.min) / 60
+      arrhour = arrhour % 24
       curarrtime = Flight_Time(arrmin, arrhour)
       curday = Flight_Day(row['set_day'], row['set_mon'], row['set_year'])
       curflight = Flight_Infoc(
@@ -136,7 +155,7 @@ def load_all_flight():
         farr = curarrtime,
         fsetday = curday,
         fprice = row['price'],
-        fseat = row['remain'])
+        fseat = row['seat'])
       retlist.append(curflight)
       row = result.fetchone()
     return retlist
@@ -149,7 +168,7 @@ def load_flight_by_name(name):
   citydic = load_cities()
   s = select([db_flight_info], and_(db_flight_info.c.flight == name))
   result = db_connect.execute(s)
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     row = result.first()
     curfrom = citydic[row['cfrom']]
     curto = citydic[row['cto']]
@@ -169,17 +188,18 @@ def load_flight_by_name(name):
       farr = curarrtime,
       fsetday = curday,
       fprice = row['price'],
-      fseat = row['remain'])
+      fseat = row['seat'])
     return curflight
   else:
     return None
+
 
 def load_flight_by_id(fid):
   '''Load a flight infomation from database by flight name'''
   citydic = load_cities()
   s = select([db_flight_info], and_(db_flight_info.c.id == fid))
   result = db_connect.execute(s)
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     row = result.first()
     curfrom = citydic[row['cfrom']]
     curto = citydic[row['cto']]
@@ -199,7 +219,7 @@ def load_flight_by_id(fid):
       farr = curarrtime,
       fsetday = curday,
       fprice = row['price'],
-      fseat = row['remain'])
+      fseat = row['seat'])
     return curflight
   else:
     return None
@@ -224,10 +244,11 @@ def insert_flight_info(insf):
     dur_min = insf.fdur.min,
     dur_hour = insf.fdur.hour,
     price = insf.fprice,
-    remain = 150)
+    seat = insf.fseat)
   try:
     result = db_connect.execute(ins)
   except IntegrityError, e:
+    print "Database Access Error: ", e
     return "Insert Data Error"
   else:
     pass
@@ -257,7 +278,7 @@ def alter_flight_info(altfs):
     dur_min = altfs.fdur.min,
     dur_hour = altfs.fdur.hour,
     price = altfs.fprice,
-    remain = 150)
+    seat = altfs.fseat)
   try:
     result = db_connect.execute(upd)
   except IntegrityError, e:
@@ -269,15 +290,219 @@ def alter_flight_info(altfs):
   
   return result
 
+
+
+def delete_flight_id(fid):
+  '''This method delete a flight_info row by the id'''
+  if type(fid) != int:
+    return None
+  fdel = db_flight_info.delete().where(db_flight_info.c.id == fid)
+  ret = db_connect.execute(fdel)
+  return ret
+
+def count_ticket(fid):
+  '''This method count remain ticket in the flight_seat table'''
+  if type(fid) != int:
+    return None
+  s = select([db_flight_seat], and_(db_flight_seat.c.fid == fid))
+  result = db_connect.execute(s)
+  count  = result.rowcount
+  result.close()
+  return count
+
+def count_ticket_remain(fid):
+  '''This method count remain ticket in the flight_seat table'''
+  if type(fid) != int:
+    return None
+  s = select([db_flight_seat], and_(db_flight_seat.c.fid == fid))
+  result = db_connect.execute(s)
+  count = result.rowcount
+  result.close()
+  infoc = load_flight_by_id(fid)
+  return infoc.fseat - count
+
+def list_seat_not_avail(fid):
+  '''This method return a list of not available seats'''
+  if type(fid) != int:
+    return None
+  s = select([db_flight_seat], and_(db_flight_seat.c.fid == fid))
+  result = db_connect.execute(s)
+  if result.rowcount == 0:
+    result.close()
+    return None
+  retlist = []
+  row = result.fetchone()
+  while row != None:
+    retlist.append(int(row['pos']))
+    row = result.fetchone()
+  return retlist
+
+def choose_a_seat(fid):
+  '''This method return an available seat'''
+  nalist = list_seat_not_avail(fid)
+  infoc = load_flight_by_id(fid)
+  avlist = []
+
+  i = 1
+  while i <= infoc.fseat:
+    if i not in nalist:
+      avlist.append(i)
+    i = i + 1
+  pos = randint(1,len(avlist))
+  print "avail list:", len(avlist)
+  return avlist[pos-1]
+
+
+def book_a_seat(fid):
+  '''This method try to book a seat, return a dict'''
+  ret = count_ticket_remain(fid)
+  if (ret == None) or (ret == 0):
+    return None
+  avpos = choose_a_seat(fid)
+  ins = db_flight_seat.insert().values(fid = fid, pos = avpos)
+  try:
+    result = db_connect.execute(ins)
+  except Exception, e:
+    print "Error while book a seat", e
+    return None
+  sid = int(result.inserted_primary_key[0])
+  dict = {'sid':sid, 'fid':fid, 'pos':avpos}
+  return dict
+
+def generate_a_ticket():
+  '''Generate a unpaid ticket, return the tid'''
+  ins = db_tickettable.insert().values(ispay = 0)
+  try:
+    result = db_connect.execute(ins)
+  except Exception, e:
+    print "Error while generate_a_ticket", e
+    return None
+  tid = int(result.inserted_primary_key[0])
+  return tid
+
+def pay_a_ticket(tid):
+  if type(tid) != int:
+    return None
+  alt = db_tickettable.update().where(db_tickettable.c.id == tid).values(ispay = 1)
+  try:
+    result = db_connect.execute(alt)
+  except Exception, e:
+    print "Error while Pay a ticket", e
+    return None
+  return 1
+
+def delete_a_ticket(tid):
+  if type(tid) != int:
+    return None
+  delop = db_tickettable.delete().where(db_tickettable.c.id == tid)
+  try:
+    result = db_connect.execute(delop)
+  except Exception, e:
+    print "Error while delete a ticket", e
+    return None
+  return 1
+
+def generate_a_remind():
+  '''Generate A remind in remind_table'''
+  ins = db_remindtable.insert().values(isget = 0)
+  try:
+    result = db_connect.execute(ins)
+  except Exception, e:
+    print "Error while generate_a_remind", e
+    return None
+  rid = int(result.inserted_primary_key[0])
+  return rid
+
+def revoke_a_remind(rid):
+  '''Revoke a remind from remind_table'''
+  if type(rid) != int:
+    return None
+  alt = db_remindtable.update().where(db_tickettable.c.id == rid).values(isget = 1)
+  try:
+    result = db_connect.execute(alt)
+  except Exception, e:
+    print "Error while Revoke a remind", e
+    return None
+  return 1
+
+def delete_a_remind(rid):
+  if type(rid) != int:
+    return None
+  delop = db_remindtable.delete().where(db_remindtable.c.id == rid)
+  try:
+    result = db_connect.execute(delop)
+  except Exception, e:
+    print "Error while delete a remind", e
+    return None
+  return 1
+
+def load_all_guests():
+  '''Load All Guest return a dict'''
+  retdict = {}
+  s = select([db_guest])
+  result = db_connect.execute(s)
+  if result.rowcount != 0:
+    #The Database contain City data
+    row = result.fetchone()
+    while row != None:
+      cur = Flight_Guest(row['id'],row['username'],row['email'])
+      retdict[cur.id] = cur
+      row = result.fetchone()
+    return retdict
+  else:
+    #The Database contain no City Data
+    return retdict
+
+def load_guest_by_id(gid):
+  '''RT'''
+  s = select([db_guest], and_(db_guest.c.id == gid))
+  result = db_connect.execute(s)
+  if result.rowcount != 0:
+    #The Database contain guest data
+    row = result.first()
+    cur = Flight_Guest(row['id'],row['username'],row['email'])
+    return cur
+  else:
+    #The Database contain no City Data
+    return None
+
+
+def book_a_flight(gid, fid):
+  '''Book A Flight .Check remain generate_a_remind and generate_a_ticket'''
+  #Check fid exist
+  finfoc = load_flight_by_id(fid)
+  fguest = load_guest_by_id(gid)
+  if (finfoc == None) or (fguest == None):
+    return "Not exist"
+  #Query A Posit
+  fdict = book_a_seat(fid)
+  if fdict == None:
+    return "Not available"
+  #Generate Remind& Ticket
+  ftid = generate_a_ticket()
+  frid = generate_a_remind()
+  #Prepare a Insert
+  ins = db_booktable.insert().values(
+    gid = gid,
+    fid = fid,
+    sid = fdict['sid'],
+    tid = ftid,
+    rid = frid)
+  try:
+    result = db_connect.execute(ins)
+  except Exception, e:
+    print "Error while generate a book", e
+    return "Error Insert"
+  bid = int(result.inserted_primary_key[0])
+  return bid
+
 def verify_admin(name, password):
   '''Verify the Administrator User from database'''
   s = select([db_admin], and_(db_admin.c.name == name, db_admin.c.password == password))
   result = db_connect.execute(s)
   #Get Database Query Results
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     #Admin Verify OK
-    print "return rows:", result.returns_rows
-    print "rows count", result.rowcount
     row = result.first()
     ret = User(name = row['name'], id = row['name'], is_admin = True, uid = row['id']);
     if ret not in lg_userlist:
@@ -303,34 +528,21 @@ def load_user(id):
   return None
   
 #Experient Code
+if __name__ == "__main__":
+  ret = verify_admin('admin','admin')
+  ret2 = load_user(ret.id)
 
-ret = verify_admin('admin','admin')
-ret2 = load_user(ret.id)
+  if ret == ret2:
+    print 'successful'
+  else:
+    print 'faild'
+    
+  # retdict = load_cities()
+  # print retdict[1].name
+  # print len(retdict)
 
-if ret == ret2:
-  print 'successful'
-else:
-  print 'faild'
-  
-# retdict = load_cities()
-# print retdict[1].name
-# print len(retdict)
+  ret = book_a_flight(1,1)
+  print ret
 
-citydic = load_cities()
-newflight = Flight_Infoc(
-  id = 50,
-  fname = u"CZ384",
-  ffrom = citydic[5],
-  fto = citydic[6],
-  fset = Flight_Time(30,15),
-  fdur = Flight_Time(00,2),
-  farr = None,
-  fsetday = Flight_Day(4,9,2012),
-  fprice = 600,
-  fseat = None)
 
-ret = insert_flight_info(newflight)
-newflight.id = 0
-newflight.fname = u"XZ384"
-ret = alter_flight_info(newflight)
 #Load Table From Database complete

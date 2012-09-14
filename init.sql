@@ -29,13 +29,13 @@ CREATE TABLE flight_info (
   dur_min int,
   dur_hour int,
   price int,
-  remain int, 
+  seat int, 
   CONSTRAINT fi1 FOREIGN KEY (cfrom) REFERENCES city (id)
   ON DELETE SET NULL
   ON UPDATE SET NULL,
   CONSTRAINT fi2 FOREIGN KEY (cto) REFERENCES city (id)
   ON DELETE SET NULL
-  ON UPDATE SET NULL  
+  ON UPDATE SET NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
   
 -- 座位预订
@@ -44,7 +44,7 @@ CREATE TABLE flight_seat (
   fid int,
   pos int,
   CONSTRAINT fs FOREIGN KEY (fid) REFERENCES flight_info (id)
-  ON DELETE SET NULL
+  ON DELETE CASCADE
   ON UPDATE SET NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
   
@@ -58,17 +58,19 @@ CREATE TABLE admin (
 -- 旅客
 CREATE TABLE guest (
   id int PRIMARY KEY AUTO_INCREMENT,
-  username VARCHAR(20),
-  fullname VARCHAR(40),
+  username VARCHAR(20),  
   password VARCHAR(100),
   email VARCHAR(100)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
   
 CREATE TABLE ticket_table (
+  id int PRIMARY KEY AUTO_INCREMENT,  
+  ispay int DEFAULT 0
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE remind_table (
   id int PRIMARY KEY AUTO_INCREMENT,
-  bid int,
-  ispay int,
-  isget int
+  isget int DEFAULT 0
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
   
 -- 订票信息
@@ -78,6 +80,7 @@ CREATE TABLE booktable (
   fid int,
   sid int,
   tid int,
+  rid int,
   CONSTRAINT bt0 FOREIGN KEY (gid) REFERENCES guest (id)
   ON DELETE SET NULL
   ON UPDATE SET NULL,
@@ -89,12 +92,12 @@ CREATE TABLE booktable (
   ON UPDATE SET NULL,
   CONSTRAINT bt3 FOREIGN KEY (tid) REFERENCES ticket_table(id)
   ON DELETE SET NULL
+  ON UPDATE SET NULL,
+  CONSTRAINT bt4 FOREIGN KEY (rid) REFERENCES remind_table(id)
+  ON DELETE SET NULL
   ON UPDATE SET NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-ALTER TABLE ticket_table ADD CONSTRAINT tt FOREIGN KEY (bid) REFERENCES booktable(id)
-  ON DELETE SET NULL
-  ON UPDATE SET NULL;
   
 -- 填充数据
 -- 城市名称
@@ -110,10 +113,41 @@ INSERT INTO city(id,name) VALUES(9,'长沙');
 INSERT INTO city(id,name) VALUES(10,'重庆');
 
 -- 航班信息
-INSERT INTO flight_info(id, flight, cfrom, cto, set_min, set_hour, set_day, set_mon, set_year, dur_min, dur_hour,price, remain) 
+INSERT INTO flight_info(id, flight, cfrom, cto, set_min, set_hour, set_day, set_mon, set_year, dur_min, dur_hour,price, seat) 
 VALUES(1, 'ZH001', 1, 3, 0, 11, 1, 9, 2012, 30, 2, 1500, 180);
 
-INSERT INTO flight_info(id, flight, cfrom, cto, set_min, set_hour, set_day, set_mon, set_year, dur_min, dur_hour,price, remain) 
+INSERT INTO flight_info(id, flight, cfrom, cto, set_min, set_hour, set_day, set_mon, set_year, dur_min, dur_hour,price, seat) 
 VALUES(2, 'CZ001', 2, 4, 30, 15, 2, 9, 2012, 00, 2, 1500, 180);
 
+-- Administrator Info
 INSERT INTO admin(name,password) values('admin','admin');
+
+-- Guest Info
+INSERT INTO guest(id, username, password, email) VALUES(1,'Alpha', 'Alpha', 'alpha@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(2,'Bravo', 'Bravo', 'bravo@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(3,'Charlie', 'Charlie', 'charlie@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(4,'Delta', 'Delta', 'delta@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(5,'Echo', 'Echo', 'echo@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(6,'Foxtrot', 'Foxtrot', 'foxtrot@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(7,'Golf', 'Golf', 'golf@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(8,'Hotel', 'Hotel', 'hotel@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(9,'India', 'India', 'india@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(10,'Juliet', 'Juliet', 'juliet@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(11,'Kilom', 'Kilom', 'kilom@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(12,'Lima', 'Lima', 'lima@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(13,'Mike', 'Mike', 'mike@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(14,'November', 'November', 'november@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(15,'Oscar', 'Oscar', 'oscar@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(16,'Papa', 'Papa', 'papa@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(17,'Quebec', 'Quebec', 'quebec@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(18,'Romeo', 'Romeo', 'romeo@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(19,'Sierra', 'Sierra', 'sierra@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(20,'Tango', 'Tango', 'tango@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(21,'Uniform', 'Uniform', 'uniform@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(22,'Victor', 'Victor', 'victor@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(23,'Whiskey', 'Whiskey', 'whiskey@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(24,'Xray', 'Xray', 'xray@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(25,'Yankee', 'Yankee', 'yankee@a.com');
+INSERT INTO guest(id, username, password, email) VALUES(26,'Zulu', 'Zulu', 'zulu@a.com');
+
+-- 

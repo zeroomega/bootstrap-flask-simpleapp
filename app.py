@@ -59,8 +59,17 @@ class Flight_Infoc(object):
 
 class Flight_Time(object):
   def __init__(self, minite, hour):
-    self.min = minite
-    self.hour = hour
+    if minite < 60:
+      self.min = minite
+    else:
+      self.min = minite % 60
+
+    if minite / 60 > 0:
+      self.hour = hour + minite / 60
+    else:
+      self.hour = hour
+    self.hour = self.hour % 24
+
 
   def __repr__(self):
     if self.hour < 10:
@@ -77,9 +86,9 @@ class Flight_Time(object):
 
 class Flight_Day(object):
   def __init__(self, day, month, year):
-    self.day = day
-    self.month = month
-    self.year =year
+    self.day = day % 31
+    self.month = month % 12
+    self.year =year 
 
 class Flight_City(object):
   def __init__(self, id, name):
@@ -143,6 +152,7 @@ def load_all_flight():
       curdurtime = Flight_Time(row['dur_min'], row['dur_hour'])
       arrmin = (cursettime.min + curdurtime.min) % 60
       arrhour = (cursettime.hour + curdurtime.hour) + (cursettime.min + curdurtime.min) / 60
+      arrhour = arrhour % 24
       curarrtime = Flight_Time(arrmin, arrhour)
       curday = Flight_Day(row['set_day'], row['set_mon'], row['set_year'])
       curflight = Flight_Infoc(
@@ -155,7 +165,7 @@ def load_all_flight():
         farr = curarrtime,
         fsetday = curday,
         fprice = row['price'],
-        fseat = row['remain'])
+        fseat = row['seat'])
       retlist.append(curflight)
       row = result.fetchone()
     return retlist
@@ -188,7 +198,7 @@ def load_flight_by_name(name):
       farr = curarrtime,
       fsetday = curday,
       fprice = row['price'],
-      fseat = row['remain'])
+      fseat = row['seat'])
     return curflight
   else:
     return None
@@ -218,7 +228,7 @@ def load_flight_by_id(fid):
       farr = curarrtime,
       fsetday = curday,
       fprice = row['price'],
-      fseat = row['remain'])
+      fseat = row['seat'])
     return curflight
   else:
     return None
@@ -243,7 +253,7 @@ def insert_flight_info(insf):
     dur_min = insf.fdur.min,
     dur_hour = insf.fdur.hour,
     price = insf.fprice,
-    remain = 150)
+    seat = insf.fseat)
   try:
     result = db_connect.execute(ins)
   except IntegrityError, e:
@@ -277,7 +287,7 @@ def alter_flight_info(altfs):
     dur_min = altfs.fdur.min,
     dur_hour = altfs.fdur.hour,
     price = altfs.fprice,
-    remain = 150)
+    seat = altfs.fseat)
   try:
     result = db_connect.execute(upd)
   except IntegrityError, e:
@@ -288,6 +298,14 @@ def alter_flight_info(altfs):
     pass
   
   return result
+
+def delete_flight_id(fid):
+  '''This method delete a flight_info row by the id'''
+  if type(fid) != int:
+    return None
+  fdel = db_flight_info.delete().where(db_flight_info.c.id == fid)
+  ret = db_connect.execute(fdel)
+  return ret
 
 class Anonymous(AnonymousUser):
   name =u"Anonymous"
@@ -426,6 +444,7 @@ def flight_manage_add():
       msg['fdaymonth'] = request.form['fdaymonth']
       msg['fdayyear'] = request.form['fdayyear']
       msg['fprice'] = request.form['fprice']
+      msg['frow'] = request.form['frow']
       print type(msg['fname'])
       msg['citydic'] = citydic
       try:
@@ -438,14 +457,15 @@ def flight_manage_add():
         fdurtime = Flight_Time(int(fdurstr[fdurind+1:len(fdurstr)]), int(fdurstr[0:fdurind]))
         #Process Set Date
         fsetday = int(request.form['fdayday'])
-        print "fsetday: ",fsetday
+        
         fsetmon = int(request.form['fdaymonth'])
-        print "fsetmon: ",fsetmon
+        
         fsetyear = int(request.form['fdayyear'])
-        print "fsetyear: ",fsetyear
+        
         fsetdate = Flight_Day(fsetday, fsetmon, fsetyear)
         fprice = int(request.form['fprice'])
-        print "fsetprice: ",fprice
+        frow = int(request.form['frow'])
+        fseat = frow * 9
         insfs = Flight_Infoc(
           id = 99,  #Just a Place holder
           fname = request.form['fname'],
@@ -456,7 +476,7 @@ def flight_manage_add():
           farr = None,
           fsetday = fsetdate,
           fprice = fprice,
-          fseat = 180
+          fseat = fseat
           )
         result = insert_flight_info(insfs)
         if type(result) != str:
@@ -475,6 +495,22 @@ def flight_manage_add():
         # return render_template('flight_manage_add.html',msg = msg)
 
     return render_template('flight_manage_add.html', msg = msg)
+
+def flight_manage_del():
+  '''Flight Info Delete Handler'''
+  if current_user.is_anonymous():
+    return redirect(url_for('login'))
+  else:
+    if DEBUG == True:
+      print "delete debug"
+    fid = int(request.args['id'])    
+    ret = delete_flight_id(fid)
+    if ret != None:
+      flash(u"删除成功")
+      return redirect(url_for('flight_manage'))
+    else:
+      flash(u"删除失败")
+      return redirect(url_for('flight_manage'))
 
 def user_create():
 #    if request.method == 'POST':
@@ -516,6 +552,7 @@ app.add_url_rule('/logout/', 'logout', logout_view)
 app.add_url_rule('/about/','about' , about_view)
 app.add_url_rule('/flight_manage/', 'flight_manage' , flight_manage_view)
 app.add_url_rule('/flight_manage_add/', 'flight_manage_add', flight_manage_add, methods=['GET', 'POST'])
+app.add_url_rule('/flight_manage_delete', 'flight_manage_delete', flight_manage_del, methods=['GET', 'POST'])
 
 # Secret key needed to use sessions.
 app.secret_key = 'mysecretkey'
