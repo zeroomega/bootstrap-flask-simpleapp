@@ -7,6 +7,7 @@ from sqlalchemy import Column, Integer, String, create_engine, MetaData, Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select, and_, or_, not_
+from sqlalchemy.exc import IntegrityError
 
 DEBUG = True
 
@@ -92,7 +93,7 @@ def verify_admin(name, password):
   s = select([db_admin], and_(db_admin.c.name == name, db_admin.c.password == password))
   result = db_connect.execute(s)
   #Get Database Query Results
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     #Admin Verify OK
     row = result.first()
     ret = User(name = row['name'], id = row['name'], is_admin = True, uid = row['id']);
@@ -112,7 +113,7 @@ def load_cities():
   retdict = {}
   s = select([db_city])
   result = db_connect.execute(s)
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     #The Database contain City data
     row = result.fetchone()
     while row != None:
@@ -132,7 +133,7 @@ def load_all_flight():
   citydic = load_cities()
   s = select([db_flight_info])
   result = db_connect.execute(s)
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     #The Database contain Flight Data
     row = result.fetchone()
     while row != None:
@@ -167,7 +168,7 @@ def load_flight_by_name(name):
   citydic = load_cities()
   s = select([db_flight_info], and_(db_flight_info.c.flight == name))
   result = db_connect.execute(s)
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     row = result.first()
     curfrom = citydic[row['cfrom']]
     curto = citydic[row['cto']]
@@ -197,7 +198,7 @@ def load_flight_by_id(fid):
   citydic = load_cities()
   s = select([db_flight_info], and_(db_flight_info.c.id == fid))
   result = db_connect.execute(s)
-  if result.returns_rows == True:
+  if result.rowcount != 0:
     row = result.first()
     curfrom = citydic[row['cfrom']]
     curto = citydic[row['cto']]
@@ -222,6 +223,71 @@ def load_flight_by_id(fid):
   else:
     return None
 
+def insert_flight_info(insf):
+  '''This method will insert a new row in flight_info table in database'''
+  if type(insf) != Flight_Infoc:
+    return "Insert Info Error"
+  citydic = load_cities()
+  if (insf.ffrom.id not in citydic) or (insf.fto.id not in citydic):
+    return "City Error"
+  #skip Flight Name check, leave it to database
+  ins = db_flight_info.insert().values(
+    flight = insf.fname,
+    cfrom  = insf.ffrom.id,
+    cto = insf.fto.id,
+    set_min = insf.fset.min,
+    set_hour = insf.fset.hour,
+    set_day = insf.fsetday.day,
+    set_mon = insf.fsetday.month,
+    set_year = insf.fsetday.year,
+    dur_min = insf.fdur.min,
+    dur_hour = insf.fdur.hour,
+    price = insf.fprice,
+    remain = 150)
+  try:
+    result = db_connect.execute(ins)
+  except IntegrityError, e:
+    print "Database Access Error: ", e
+    return "Insert Data Error"
+  else:
+    pass
+  finally:
+    pass
+  
+  return result
+
+def alter_flight_info(altfs):
+  '''Alter A Flight Info By ID'''
+  if type(altfs) != Flight_Infoc:
+    return "Update Info Error"
+  citydic = load_cities()
+  if (altfs.ffrom.id not in citydic) or (altfs.fto.id not in citydic):
+    return "City Error"
+  #skip Flight Name check, leave it to database
+  upd = db_flight_info.update().where(db_flight_info.c.id == altfs.id).values(
+    id = altfs.id,
+    flight = altfs.fname,
+    cfrom  = altfs.ffrom.id,
+    cto = altfs.fto.id,
+    set_min = altfs.fset.min,
+    set_hour = altfs.fset.hour,
+    set_day = altfs.fsetday.day,
+    set_mon = altfs.fsetday.month,
+    set_year = altfs.fsetday.year,
+    dur_min = altfs.fdur.min,
+    dur_hour = altfs.fdur.hour,
+    price = altfs.fprice,
+    remain = 150)
+  try:
+    result = db_connect.execute(upd)
+  except IntegrityError, e:
+    return "Update Data Error"
+  else:
+    pass
+  finally:
+    pass
+  
+  return result
 
 class Anonymous(AnonymousUser):
   name =u"Anonymous"
@@ -342,12 +408,72 @@ def flight_manage_add():
   if current_user.is_anonymous():
     return redirect(url_for('login'))
   else:
+    citydic = load_cities()
     if request.method == 'GET':
       # A Get Request
-      msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name}
+      msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'is_post':False}
+      msg['citydic'] = citydic
       return render_template('flight_manage_add.html', msg = msg)
     elif request.method == 'POST':
-      pass
+      #Process Set Time
+      msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'is_post':True}
+      msg['fset'] = request.form['fset']
+      msg['fdur'] = request.form['fdur']
+      msg['fname'] = request.form['fname']
+      msg['ffrom'] = request.form['ffrom']
+      msg['fto'] = request.form['fto']
+      msg['fdayday'] = request.form['fdayday']
+      msg['fdaymonth'] = request.form['fdaymonth']
+      msg['fdayyear'] = request.form['fdayyear']
+      msg['fprice'] = request.form['fprice']
+      print type(msg['fname'])
+      msg['citydic'] = citydic
+      try:
+        fsetstr = request.form['fset']
+        fsetind = fsetstr.index(':')
+        fdurstr = request.form['fdur']
+        fdurind = fdurstr.index(':')
+        fsettime = Flight_Time(int(fsetstr[fsetind+1:len(fsetstr)]), int(fsetstr[0:fsetind]))
+        #Process Dur Time
+        fdurtime = Flight_Time(int(fdurstr[fdurind+1:len(fdurstr)]), int(fdurstr[0:fdurind]))
+        #Process Set Date
+        fsetday = int(request.form['fdayday'])
+        print "fsetday: ",fsetday
+        fsetmon = int(request.form['fdaymonth'])
+        print "fsetmon: ",fsetmon
+        fsetyear = int(request.form['fdayyear'])
+        print "fsetyear: ",fsetyear
+        fsetdate = Flight_Day(fsetday, fsetmon, fsetyear)
+        fprice = int(request.form['fprice'])
+        print "fsetprice: ",fprice
+        insfs = Flight_Infoc(
+          id = 99,  #Just a Place holder
+          fname = request.form['fname'],
+          ffrom = citydic[int(request.form['ffrom'])],
+          fto = citydic[int(request.form['fto'])],
+          fset = fsettime,
+          fdur = fdurtime,
+          farr = None,
+          fsetday = fsetdate,
+          fprice = fprice,
+          fseat = 180
+          )
+        result = insert_flight_info(insfs)
+        if type(result) != str:
+          flash(u"新增航班信息成功")
+          return redirect(url_for('flight_manage'))
+        else:
+          if DEBUG == True:
+            print result
+          flash(u"航班信息填写有误")
+          return render_template('flight_manage_add.html',msg = msg)
+      except Exception,e:
+        flash(u"航班信息填写有误")
+        print e
+        return render_template('flight_manage_add.html',msg = msg)
+        # flash(u"航班信息填写有误")
+        # return render_template('flight_manage_add.html',msg = msg)
+
     return render_template('flight_manage_add.html', msg = msg)
 
 def user_create():
@@ -389,7 +515,7 @@ app.add_url_rule('/users/create/', 'user_create', user_create, methods=['GET', '
 app.add_url_rule('/logout/', 'logout', logout_view)
 app.add_url_rule('/about/','about' , about_view)
 app.add_url_rule('/flight_manage/', 'flight_manage' , flight_manage_view)
-app.add_url_rule('/flight_manage_add/', 'flight_manage_add', flight_manage_add)
+app.add_url_rule('/flight_manage_add/', 'flight_manage_add', flight_manage_add, methods=['GET', 'POST'])
 
 # Secret key needed to use sessions.
 app.secret_key = 'mysecretkey'

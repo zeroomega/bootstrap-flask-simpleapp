@@ -10,37 +10,61 @@
  
     <div class="span9">
       <!-- Main hero unit for a primary marketing message or call to action --> 
-      <form>
+      <form method="POST">
         <legend>新增航班信息</legend>
         <label>航班名称:</label>
-        <input name="fname" type="text" placeholder="示例:CZ001" value="" />
+        {% if msg.is_post == False%}
+          <input name="fname" type="text" placeholder="示例:CZ001" value="" />
+        {% else %}
+          <input name="fname" type="text" placeholder="示例:CZ001" value="{{ msg.fname }}" />
+        {% endif %}
         <span class="help-block">航班名称用于表示航班识别信息，需要做到独一无二</span>
         <br/>
         <label>始发地:</label>
         <select name='ffrom'>
-          <option value='1'>北京</option>
-          <option value='2'>天津</option>
+          {% for item in msg.citydic %}
+            <option value='{{ item }}'>{{ msg.citydic[item].name }}</option>
+          {% endfor %}
         </select>
         <label>目的地:</label>
         <select name='fto'>
-          <option value='1'>北京</option>
-          <option value='2'>天津</option>
+          {% for item in msg.citydic %}
+            <option value='{{ item }}'>{{ msg.citydic[item].name }}</option>
+          {% endfor %}          
         </select>
         <span class="help-block">用来表示飞机的始发地和目的地</span>
         <br/>
         <label>起飞时间:</label>
-        <input name='fset' type="text" placeholder="示例:15:00"/>
+          {% if msg.is_post == False %}
+            <input name='fset' type="text" placeholder="示例:15:00"/>
+          {% else %}
+            <input name='fset' type="text" value={{ msg.fset }} placeholder="示例:15:00"/>
+          {% endif %}
         <label>飞行时间:</label>
-        <input name='fdur' type="text" placeholder="示例:1:00"/>
+          {% if msg.is_post == False %}
+            <input name='fdur' type="text" placeholder="示例:1:00"/>
+          {% else %}
+            <input name='fdur' type="text" value={{ msg.fdur }} placeholder="示例:15:00"/>
+          {% endif%}
         <br/>
         <label>起飞日期</label>
-        <input name='fdayyear' type="text" style="width:40px" maxlength="5" placeholder="2012"/>年
-        <input name='fdaymonth' type="text" style="width:20px" maxlength="3" placeholder="12"/>月
-        <input name='fdayday' type="text" style="width:20px" maxlength="3" placeholder="1"/>日
+          {% if msg.is_post == False %}
+            <input name='fdayyear' type="text" style="width:40px" maxlength="5" placeholder="2012"/>年
+            <input name='fdaymonth' type="text" style="width:20px" maxlength="3" placeholder="12"/>月
+            <input name='fdayday' type="text" style="width:20px" maxlength="3" placeholder="1"/>日
+          {% else %}
+            <input name='fdayyear' type="text" style="width:40px" maxlength="5" value= {{ msg.fdayyear }} placeholder="2012"/>年
+            <input name='fdaymonth' type="text" style="width:20px" maxlength="3" value= {{ msg.fdaymonth }} placeholder="12"/>月
+            <input name='fdayday' type="text" style="width:20px" maxlength="3" value= {{ msg.fdayday }} placeholder="1"/>日
+          {% endif %}
         <span class="help-block">此处用来设定航班时刻信息</span>
         <br/>
         <label>票价</label>
-        <input name='fprice' type="text" style="width:40px" maxlength="5" placeholder="500"/>元
+        {% if msg.is_post == False %}
+          <input name='fprice' type="text" style="width:40px" maxlength="5" placeholder="500"/>元
+        {% else %}
+          <input name='fprice' type="text" style="width:40px" value={{ msg.fprice }} maxlength="5" placeholder="500"  />元
+        {% endif %}
         <span class="help-block">设定机票价格</span>
         <br/>
         <button type="submit" class="btn">提交</button>

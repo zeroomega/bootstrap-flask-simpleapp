@@ -238,7 +238,36 @@ def insert_flight_info(insf):
 
 def alter_flight_info(altfs):
   '''Alter A Flight Info By ID'''
-  pass
+  if type(altfs) != Flight_Infoc:
+    return "Update Info Error"
+  citydic = load_cities()
+  if (altfs.ffrom.id not in citydic) or (altfs.fto.id not in citydic):
+    return "City Error"
+  #skip Flight Name check, leave it to database
+  upd = db_flight_info.update().where(db_flight_info.c.id == altfs.id).values(
+    id = altfs.id,
+    flight = altfs.fname,
+    cfrom  = altfs.ffrom.id,
+    cto = altfs.fto.id,
+    set_min = altfs.fset.min,
+    set_hour = altfs.fset.hour,
+    set_day = altfs.fsetday.day,
+    set_mon = altfs.fsetday.month,
+    set_year = altfs.fsetday.year,
+    dur_min = altfs.fdur.min,
+    dur_hour = altfs.fdur.hour,
+    price = altfs.fprice,
+    remain = 150)
+  try:
+    result = db_connect.execute(upd)
+  except IntegrityError, e:
+    return "Update Data Error"
+  else:
+    pass
+  finally:
+    pass
+  
+  return result
 
 def verify_admin(name, password):
   '''Verify the Administrator User from database'''
@@ -247,6 +276,8 @@ def verify_admin(name, password):
   #Get Database Query Results
   if result.returns_rows == True:
     #Admin Verify OK
+    print "return rows:", result.returns_rows
+    print "rows count", result.rowcount
     row = result.first()
     ret = User(name = row['name'], id = row['name'], is_admin = True, uid = row['id']);
     if ret not in lg_userlist:
@@ -299,4 +330,7 @@ newflight = Flight_Infoc(
   fseat = None)
 
 ret = insert_flight_info(newflight)
+newflight.id = 0
+newflight.fname = u"XZ384"
+ret = alter_flight_info(newflight)
 #Load Table From Database complete

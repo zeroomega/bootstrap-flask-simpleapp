@@ -10,14 +10,14 @@ USE dbproj;
 -- 建立相应的数据表
 -- 建立城市信息表
 CREATE TABLE city (
-  id int,
+  id int AUTO_INCREMENT,
   name VARCHAR(40) UNIQUE NOT NULL,
   PRIMARY KEY (id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
   
 -- 建立航班信息表
 CREATE TABLE flight_info (
-  id int PRIMARY KEY,
+  id int PRIMARY KEY AUTO_INCREMENT,
   flight VARCHAR(40) UNIQUE NOT NULL,
   cfrom int,
   cto int,
@@ -40,7 +40,7 @@ CREATE TABLE flight_info (
   
 -- 座位预订
 CREATE TABLE flight_seat (
-  id int PRIMARY KEY,
+  id int PRIMARY KEY AUTO_INCREMENT,
   fid int,
   pos int,
   CONSTRAINT fs FOREIGN KEY (fid) REFERENCES flight_info (id)
@@ -50,14 +50,14 @@ CREATE TABLE flight_seat (
   
 -- 管理员
 CREATE TABLE admin (
-  id int PRIMARY KEY,
+  id int PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(20),
   password VARCHAR(100)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
   
 -- 旅客
 CREATE TABLE guest (
-  id int PRIMARY KEY,
+  id int PRIMARY KEY AUTO_INCREMENT,
   username VARCHAR(20),
   fullname VARCHAR(40),
   password VARCHAR(100),
@@ -65,7 +65,7 @@ CREATE TABLE guest (
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
   
 CREATE TABLE ticket_table (
-  id int PRIMARY KEY,
+  id int PRIMARY KEY AUTO_INCREMENT,
   bid int,
   ispay int,
   isget int
@@ -73,7 +73,7 @@ CREATE TABLE ticket_table (
   
 -- 订票信息
 CREATE TABLE booktable (
-  id int PRIMARY KEY,
+  id int PRIMARY KEY AUTO_INCREMENT,
   gid int,
   fid int,
   sid int,
@@ -115,3 +115,5 @@ VALUES(1, 'ZH001', 1, 3, 0, 11, 1, 9, 2012, 30, 2, 1500, 180);
 
 INSERT INTO flight_info(id, flight, cfrom, cto, set_min, set_hour, set_day, set_mon, set_year, dur_min, dur_hour,price, remain) 
 VALUES(2, 'CZ001', 2, 4, 30, 15, 2, 9, 2012, 00, 2, 1500, 180);
+
+INSERT INTO admin(name,password) values('admin','admin');
