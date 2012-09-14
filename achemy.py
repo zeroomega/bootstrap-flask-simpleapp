@@ -7,6 +7,7 @@ from sqlalchemy import Column, Integer, String, create_engine, MetaData, Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select, and_, or_, not_
+from sqlalchemy.exc import IntegrityError
 
 DEBUG = True
 
@@ -40,6 +41,21 @@ class Flight_Time(object):
   def __init__(self, minite, hour):
     self.min = minite
     self.hour = hour
+
+  def __repr__(self):
+    if self.hour < 10:
+      sthour = '0' + str(self.hour)
+    else:
+      sthour = str(self.hour)
+
+    if self.min < 10:
+      sthmin = '0' + str(self.min)
+    else:
+      sthmin = str(self.min)
+    return sthour + ':' + sthmin
+
+
+
 
 
 class Flight_Day(object):
@@ -129,7 +145,7 @@ def load_all_flight():
     return retlist
 
 def load_flight_by_name(name):
-'''Load a flight infomation from database by flight name'''
+  '''Load a flight infomation from database by flight name'''
   citydic = load_cities()
   s = select([db_flight_info], and_(db_flight_info.c.flight == name))
   result = db_connect.execute(s)
@@ -159,7 +175,7 @@ def load_flight_by_name(name):
     return None
 
 def load_flight_by_id(fid):
-'''Load a flight infomation from database by flight name'''
+  '''Load a flight infomation from database by flight name'''
   citydic = load_cities()
   s = select([db_flight_info], and_(db_flight_info.c.id == fid))
   result = db_connect.execute(s)
@@ -187,6 +203,42 @@ def load_flight_by_id(fid):
     return curflight
   else:
     return None
+
+def insert_flight_info(insf):
+  '''This method will insert a new row in flight_info table in database'''
+  if type(insf) != Flight_Infoc:
+    return "Insert Info Error"
+  citydic = load_cities()
+  if (insf.ffrom.id not in citydic) or (insf.fto.id not in citydic):
+    return "City Error"
+  #skip Flight Name check, leave it to database
+  ins = db_flight_info.insert().values(
+    flight = insf.fname,
+    cfrom  = insf.ffrom.id,
+    cto = insf.fto.id,
+    set_min = insf.fset.min,
+    set_hour = insf.fset.hour,
+    set_day = insf.fsetday.day,
+    set_mon = insf.fsetday.month,
+    set_year = insf.fsetday.year,
+    dur_min = insf.fdur.min,
+    dur_hour = insf.fdur.hour,
+    price = insf.fprice,
+    remain = 150)
+  try:
+    result = db_connect.execute(ins)
+  except IntegrityError, e:
+    return "Insert Data Error"
+  else:
+    pass
+  finally:
+    pass
+  
+  return result
+
+def alter_flight_info(altfs):
+  '''Alter A Flight Info By ID'''
+  pass
 
 def verify_admin(name, password):
   '''Verify the Administrator User from database'''
@@ -233,7 +285,18 @@ else:
 # print retdict[1].name
 # print len(retdict)
 
-retlist = load_all_flight()
-print len(retlist)
+citydic = load_cities()
+newflight = Flight_Infoc(
+  id = 50,
+  fname = u"CZ384",
+  ffrom = citydic[5],
+  fto = citydic[6],
+  fset = Flight_Time(30,15),
+  fdur = Flight_Time(00,2),
+  farr = None,
+  fsetday = Flight_Day(4,9,2012),
+  fprice = 600,
+  fseat = None)
 
+ret = insert_flight_info(newflight)
 #Load Table From Database complete

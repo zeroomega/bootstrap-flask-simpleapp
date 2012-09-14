@@ -11,63 +11,106 @@
     <div class="span9">
       <!-- Main hero unit for a primary marketing message or call to action --> 
       <div class="hero-unit">
-        <a class="btn btn-primary btn-medium">新增</a>
-        <table border="1">
-          <tr>
-            <th>航班名称</th>
-            <th>始发地</th>
-            <th>目的地</th>
-            <th>起飞时间</th>
-            <th>飞行时间</th>
-            <th>着陆时间</th>
-            <th>价格</th>
-            <th>余票</th>
-            <th>操作</th>
-          </tr>
-          <tr>
-            <td>CZ001</td>
-            <td>武汉</td>
-            <td>北京</td>
-            <td>
-              <table>
-                <td>15</td>
-                <td>:</td>
-                <td>00</td>
-              </table>
-            </td>
-            <td>
-              <table>
-                <td>2</td>
-                <td>:</td>
-                <td>00</td>
-              </table>
-            </td>
-            <td>
-              <table>
-                <td>17</td>
-                <td>:</td>
-                <td>00</td>
-              </table>
-            </td>
-            <td>500RMB</td>
-            <td>150</td>
-            <td>
-              <table>
-                <td>
-                  <a class="btn btn-primary btn-mini" href="#">编辑</a>
-                </td>
-                <td>
-                  <a class="btn btn-primary btn-mini" href="#">删除</a>
-                </td>
-                <td>
-                  <a class="btn btn-primary btn-mini" href="#">售票</a>
-                </td>
-              </table>
-
-            </td>
-          </tr>
+        <a class="btn" href="/flight_manage_add/">新增</a>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>航班名称</th>
+              <th>始发地</th>
+              <th>目的地</th>
+              <th>起飞时间</th>
+              <th>飞行时间</th>
+              <th>着陆时间</th>
+              <th>日期</th>
+              <th>价格</th>
+              <th>余票</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CZ001</td>
+              <td>武汉</td>
+              <td>北京</td>
+              <td>
+                <!-- <table>
+                  <td>15</td>
+                  <td>:</td>
+                  <td>00</td>
+                </table> -->
+                15:00
+              </td>
+              <td>
+                <!-- <table>
+                  <td>2</td>
+                  <td>:</td>
+                  <td>00</td>
+                </table> -->
+                2:30
+              </td>
+              <td>
+                <!-- <table>
+                  <td>17</td>
+                  <td>:</td>
+                  <td>00</td>
+                </table> -->
+                17:00
+              </td>
+              <td>
+                2012年2月1日
+              </td>
+              <td>500RMB</td>
+              <td>150</td>
+              <td>
+                
+                    <!-- <a class="btn btn-primary btn-mini" href="#">编辑</a>
+                  </td>
+                  <td>
+                    <a class="btn btn-primary btn-mini" href="#">删除</a>
+                  </td>
+                  <td>
+                    <a class="btn btn-primary btn-mini" href="#">售票</a> -->
+                  <div class="btn-group">
+                    <button class="btn btn-mini">编辑</button>
+                    <button class="btn btn-mini">删除</button>
+                    <button class="btn btn-mini">售票</button>
+                  </div>
+              </td>  
+            </tr>
+            {% if msg.flightlist != None %}
+              {% for item in msg.flightlist %}
+                <tr>
+                  <td>{{ item.fname }}</td>
+                  <td>{{ item.ffrom.name }}</td>
+                  <td>{{ item.fto.name }}</td>
+                  <td>
+                    {{ item.fset }}
+                  </td>
+                  <td>
+                    {{ item.fdur }}
+                  </td>
+                  <td>
+                    {{ item.farr }}
+                  </td>
+                  <td>
+                    {{ item.fsetday.year }}年{{ item.fsetday.month }}月{{ item.fsetday.day }}日
+                  </td>
+                  <td>￥{{ item.fprice }}</td>
+                  <td>{{ item.fseat }}</td>
+                  <td>
+                    
+                      <div class="btn-group">
+                        <button class="btn btn-mini">编辑</button>
+                        <button class="btn btn-mini">删除</button>
+                        <button class="btn btn-mini">售票</button>
+                      </div>
+                  </td>  
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
         </table>            
-        <a class="btn btn-primary btn-medium">新增</a>
+        <a class="btn" href="/flight_manage_add/">新增</a>
       </div>
      </div>
 

@@ -42,6 +42,51 @@ db_tickettable = Table('ticket_table', metadata, autoload=True, autoload_with=en
 
 lg_userlist = []
 
+class Flight_Infoc(object):
+  def __init__(self, id ,fname, ffrom, fto, fset, fdur, farr, fsetday, fprice, fseat):
+    self.id = id
+    self.fname = fname
+    self.ffrom = ffrom
+    self.fto = fto
+    self.fset = fset
+    self.fdur = fdur
+    self.farr = farr
+    self.fsetday = fsetday
+    self.fprice = fprice
+    self.fseat = fseat
+
+
+class Flight_Time(object):
+  def __init__(self, minite, hour):
+    self.min = minite
+    self.hour = hour
+
+  def __repr__(self):
+    if self.hour < 10:
+      sthour = '0' + str(self.hour)
+    else:
+      sthour = str(self.hour)
+
+    if self.min < 10:
+      sthmin = '0' + str(self.min)
+    else:
+      sthmin = str(self.min)
+    return sthour + ':' + sthmin
+
+
+class Flight_Day(object):
+  def __init__(self, day, month, year):
+    self.day = day
+    self.month = month
+    self.year =year
+
+class Flight_City(object):
+  def __init__(self, id, name):
+    self.id = id
+    self.name = name
+
+
+
 def verify_admin(name, password):
   '''Verify the Administrator User from database'''
   s = select([db_admin], and_(db_admin.c.name == name, db_admin.c.password == password))
@@ -62,6 +107,122 @@ def verify_admin(name, password):
     return None
     
  
+def load_cities():
+  '''Load All City Info from database,return a dict`'''
+  retdict = {}
+  s = select([db_city])
+  result = db_connect.execute(s)
+  if result.returns_rows == True:
+    #The Database contain City data
+    row = result.fetchone()
+    while row != None:
+      cur = Flight_City(row['id'],row['name'])
+      retdict[cur.id] = cur
+      row = result.fetchone()
+
+    return retdict
+  else:
+    #The Database contain no City Data
+    return retdict
+
+def load_all_flight():
+  '''Load all flight info from database, return a list of Flight_Infoc'''
+  retlist = []
+  #Load All City Info as dict
+  citydic = load_cities()
+  s = select([db_flight_info])
+  result = db_connect.execute(s)
+  if result.returns_rows == True:
+    #The Database contain Flight Data
+    row = result.fetchone()
+    while row != None:
+      curfrom = citydic[row['cfrom']]
+      curto = citydic[row['cto']]
+      cursettime = Flight_Time(row['set_min'], row['set_hour'])
+      curdurtime = Flight_Time(row['dur_min'], row['dur_hour'])
+      arrmin = (cursettime.min + curdurtime.min) % 60
+      arrhour = (cursettime.hour + curdurtime.hour) + (cursettime.min + curdurtime.min) / 60
+      curarrtime = Flight_Time(arrmin, arrhour)
+      curday = Flight_Day(row['set_day'], row['set_mon'], row['set_year'])
+      curflight = Flight_Infoc(
+        id = row['id'], 
+        fname = row['flight'], 
+        ffrom = curfrom, 
+        fto = curto, 
+        fset = cursettime,
+        fdur = curdurtime,
+        farr = curarrtime,
+        fsetday = curday,
+        fprice = row['price'],
+        fseat = row['remain'])
+      retlist.append(curflight)
+      row = result.fetchone()
+    return retlist
+  else:
+    #The Database contain no Flight Data
+    return retlist
+
+def load_flight_by_name(name):
+  '''Load a flight infomation from database by flight name'''
+  citydic = load_cities()
+  s = select([db_flight_info], and_(db_flight_info.c.flight == name))
+  result = db_connect.execute(s)
+  if result.returns_rows == True:
+    row = result.first()
+    curfrom = citydic[row['cfrom']]
+    curto = citydic[row['cto']]
+    cursettime = Flight_Time(row['set_min'], row['set_hour'])
+    curdurtime = Flight_Time(row['dur_min'], row['dur_hour'])
+    arrmin = (cursettime.min + curdurtime.min) % 60
+    arrhour = (cursettime.hour + curdurtime.hour) + (cursettime.min + curdurtime.min) / 60
+    curarrtime = Flight_Time(arrmin, arrhour)
+    curday = Flight_Day(row['set_day'], row['set_mon'], row['set_year'])
+    curflight = Flight_Infoc(
+      id = row['id'], 
+      fname = row['flight'], 
+      ffrom = curfrom, 
+      fto = curto, 
+      fset = cursettime,
+      fdur = curdurtime,
+      farr = curarrtime,
+      fsetday = curday,
+      fprice = row['price'],
+      fseat = row['remain'])
+    return curflight
+  else:
+    return None
+
+def load_flight_by_id(fid):
+  '''Load a flight infomation from database by flight name'''
+  citydic = load_cities()
+  s = select([db_flight_info], and_(db_flight_info.c.id == fid))
+  result = db_connect.execute(s)
+  if result.returns_rows == True:
+    row = result.first()
+    curfrom = citydic[row['cfrom']]
+    curto = citydic[row['cto']]
+    cursettime = Flight_Time(row['set_min'], row['set_hour'])
+    curdurtime = Flight_Time(row['dur_min'], row['dur_hour'])
+    arrmin = (cursettime.min + curdurtime.min) % 60
+    arrhour = (cursettime.hour + curdurtime.hour) + (cursettime.min + curdurtime.min) / 60
+    curarrtime = Flight_Time(arrmin, arrhour)
+    curday = Flight_Day(row['set_day'], row['set_mon'], row['set_year'])
+    curflight = Flight_Infoc(
+      id = row['id'], 
+      fname = row['flight'], 
+      ffrom = curfrom, 
+      fto = curto, 
+      fset = cursettime,
+      fdur = curdurtime,
+      farr = curarrtime,
+      fsetday = curday,
+      fprice = row['price'],
+      fseat = row['remain'])
+    return curflight
+  else:
+    return None
+
+
 class Anonymous(AnonymousUser):
   name =u"Anonymous"
   
@@ -146,29 +307,11 @@ def login():
 	    if login_user(user, remember = True):
 	      if DEBUG == True:
 		print 'Login Successful'
-	      return redirect(url_for('home'))  
-	  
-#	if username == useradmin.name:
-#	  if login_user(useradmin, remember = True):
-	    #flash("Logged in")
-	    #return redirect(url_for('home'))
-	  #else:
-	    #flash("Login Data Error")
+	      return redirect(url_for('home'))
+
     else:
       return render_template('login.html')
-#        user = User.query.filter(User.username==username).first()
-#        if user is not None:
-            # Authenticate and log in!
-#            if user.authenticate(request.form['password']):
-#               session['username'] = request.form['username']
-#                return redirect(url_for('home'))
-#            else:
-#                flash('Incorrect password. Please try again')
-#                return render_template('login.html')
-#        else:
-#            flash('Incorrect username. Please try again')
-#            return render_template('login.html')
-#    return render_template('login.html')
+       
 
 #@login_required()
 def home():
@@ -185,9 +328,27 @@ def flight_manage_view():
       return redirect(url_for('login'))
     else:
       #Initialize Database Access
-      
-      msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name}
+      flightlist = load_all_flight()
+      if len(flightlist) == 0:
+        #No Flight Data
+        msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'flightlist':None}
+      else:
+        #Flight Data Present
+        msg = {
+        'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'flightlist':flightlist}
       return render_template('flight_manage.html', msg=msg)
+
+def flight_manage_add():
+  if current_user.is_anonymous():
+    return redirect(url_for('login'))
+  else:
+    if request.method == 'GET':
+      # A Get Request
+      msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name}
+      return render_template('flight_manage_add.html', msg = msg)
+    elif request.method == 'POST':
+      pass
+    return render_template('flight_manage_add.html', msg = msg)
 
 def user_create():
 #    if request.method == 'POST':
@@ -213,13 +374,7 @@ def logout_view():
   else:
     flash(u"您还未登录")
     return redirect(url_for('index'))
-#    user_data = logout()
-#    if user_data is None:
-#        msg = 'No user to log out.'
-#        return render_template('logout.html', msg=msg)
-#    else:
-#        msg = 'Logged out user {0}.'.format(user_data['username'])
-#        return render_template('logout.html', msg=msg)
+
   
         
 def about_view():
@@ -233,7 +388,8 @@ app.add_url_rule('/home/', 'home', home)
 app.add_url_rule('/users/create/', 'user_create', user_create, methods=['GET', 'POST'])
 app.add_url_rule('/logout/', 'logout', logout_view)
 app.add_url_rule('/about/','about' , about_view)
-app.add_url_rule('/flight_manage/','flight_manage' , flight_manage_view)
+app.add_url_rule('/flight_manage/', 'flight_manage' , flight_manage_view)
+app.add_url_rule('/flight_manage_add/', 'flight_manage_add', flight_manage_add)
 
 # Secret key needed to use sessions.
 app.secret_key = 'mysecretkey'
