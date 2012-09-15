@@ -112,13 +112,16 @@ def flight_manage_view():
     else:
       #Initialize Database Access
       flightlist = load_all_flight()
+      guestdict = load_all_guests()
       if len(flightlist) == 0:
         #No Flight Data
-        msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'flightlist':None}
+        msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'flightlist':None, 
+        'guestdict':guestdict}
       else:
         #Flight Data Present
         msg = {
-        'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'flightlist':flightlist}
+        'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'flightlist':flightlist,
+        'guestdict':guestdict}
       return render_template('flight_manage.html', msg=msg)
 
 def flight_manage_add():
@@ -211,6 +214,13 @@ def flight_manage_del():
       flash(u"删除失败")
       return redirect(url_for('flight_manage'))
 
+def book_ticket_view():
+  '''Let the Admin select a guest'''
+  if current_user.is_anonymous():
+    return redirect(url_for('login'))
+
+
+
 def user_create():
 #    if request.method == 'POST':
 #        username = request.form['username']
@@ -236,8 +246,7 @@ def logout_view():
     flash(u"您还未登录")
     return redirect(url_for('index'))
 
-  
-        
+       
 def about_view():
   msg = load_env()
   return render_template('about.html', msg = msg)

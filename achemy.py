@@ -377,7 +377,22 @@ def book_a_seat(fid):
     return None
   sid = int(result.inserted_primary_key[0])
   dict = {'sid':sid, 'fid':fid, 'pos':avpos}
+  result.close()
   return dict
+
+def revoke_a_seat(sid):
+  '''This method try to revoke a seat from seat table'''
+  if DEBUG == True:
+    print "Try to delete a seat at id ",sid    
+  delop = db_flight_seat.delete().where(db_flight_seat.c.id == sid)
+  try:
+    result = db_connect.execute(delop)
+  except Exception, e:
+    print "Error while revoke a seat: ", e
+    return None
+  result.close()
+  return 1
+
 
 def generate_a_ticket():
   '''Generate a unpaid ticket, return the tid'''
@@ -506,6 +521,57 @@ def book_a_flight(gid, fid):
   bid = int(result.inserted_primary_key[0])
   return bid
 
+def delete_a_book(bid):
+  '''Delete a item from '''
+  if type(bid) != int:
+    return None
+  s = select([db_booktable], and_(db_booktable.c.id == bid))
+  try:
+    result = db_connect.execute(s)
+  except Exception, e:
+    print "Error while query the bid", e
+    return None
+  if result.rowcount == 0:
+    return None
+  row = result.first()
+  sid = row['sid']
+  tid = row['tid']
+  rid = row['rid']
+  #Prepare delete foreign key reference data
+  if DEBUG == True:
+    print 'sid = ',sid
+    print 'tid = ',tid
+    print 'rid = ',rid
+  ret1 = 1
+  ret2 = 1
+  ret3 = 1
+  if sid != None:
+    sid = int(sid)
+    ret3 = revoke_a_seat(sid)
+
+  if tid != None:
+    tid = int(tid)
+    ret1 = delete_a_ticket(tid)
+
+  if rid != None:
+    rid = int(rid)
+    ret2 = delete_a_remind(rid)
+  
+
+  if (ret1 == None) or (ret2 == None) or (ret3 == None):
+    return None
+  result.close()
+  delop = db_booktable.delete().where(db_booktable.c.id == bid)
+  try:
+    result = db_connect.execute(delop)
+  except Exception, e:
+    print "Error while delete a book", e
+    return None
+  return 1
+
+
+
+
 def verify_admin(name, password):
   '''Verify the Administrator User from database'''
   s = select([db_admin], and_(db_admin.c.name == name, db_admin.c.password == password))
@@ -551,7 +617,7 @@ if __name__ == "__main__":
   # print retdict[1].name
   # print len(retdict)
 
-  ret = book_a_flight(1,1)
+  ret = delete_a_book(1)
   print ret
 
 

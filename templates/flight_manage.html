@@ -54,7 +54,7 @@
                       <div class="btn-group">
                         <a class="btn btn-mini">编辑</a>
                         <a class="btn btn-mini" href="/flight_manage_delete?id={{ item.id }}">删除</a>
-                        <a class="btn btn-mini">售票</a>
+                        <button class="btn btn-mini" onclick="set_flight_id({{ item.id }})">售票</button>
                         <a class="btn btn-mini">查看</a>
                       </div>
                   </td>  
@@ -62,9 +62,47 @@
               {% endfor %}
             {% endif %}
           </tbody>
-        </table>            
+        </table>          
         <a class="btn" href="/flight_manage_add/">新增</a>
+        
       </div>
      </div>
+         
+    <!-- Modal -->
+    <div class="modal" id="guestpop" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel">选择一名乘客</h3>
+      </div>
+      <div class="modal-body">
+        <form id="ticket_form" method="POST" action="/book_ticket_view" >
+          <input id="flightid" type="hidden" name="hfid" value="123" />
+          <select id="guestid" name="hgid" >
+            {% for item in msg.guestdict %}
+              <option value = "{{ item }}">{{ msg.guestdict[item] }}</option>
+            {% endfor%}
+            
+          </select>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">取消</button>
+        <button class="btn btn-primary" onclick="submit_ticket_action()" >确定</button>
+      </div>
+    </div>
+
+     <script type="text/javascript">
+     function set_flight_id(sid){
+      flightid = document.getElementById("flightid")
+      flightid.value = sid
+      modalpop = document.getElementById("guestpop")
+      $('#guestpop').modal({show:true, backdrop:true})
+     }
+
+     function submit_ticket_action(){
+      hform = document.getElementById("ticket_form")
+      hform.submit()
+     }
+     </script>
 
 {% endblock %}
