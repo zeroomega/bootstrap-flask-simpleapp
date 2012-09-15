@@ -40,8 +40,17 @@ class Flight_Infoc(object):
 
 class Flight_Time(object):
   def __init__(self, minite, hour):
-    self.min = minite
-    self.hour = hour
+    if minite < 60:
+      self.min = minite
+    else:
+      self.min = minite % 60
+
+    if minite / 60 > 0:
+      self.hour = hour + minite / 60
+    else:
+      self.hour = hour
+    self.hour = self.hour % 24
+
 
   def __repr__(self):
     if self.hour < 10:
@@ -54,6 +63,7 @@ class Flight_Time(object):
     else:
       sthmin = str(self.min)
     return sthour + ':' + sthmin
+
 
 class Flight_Day(object):
   def __init__(self, day, month, year):
