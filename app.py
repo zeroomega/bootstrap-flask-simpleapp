@@ -4,6 +4,7 @@ from flask.ext.login import (LoginManager, current_user, login_required,
                             login_user, logout_user, UserMixin, AnonymousUser,
                             confirm_login, fresh_login_required)
 from achemy import *
+import base64
 
 DEBUG = True
 
@@ -218,6 +219,41 @@ def book_ticket_view():
   '''Let the Admin select a guest'''
   if current_user.is_anonymous():
     return redirect(url_for('login'))
+  if request.method == 'GET':
+    return redirect(url_for_('home'))
+  #Process Postdata
+
+  fid = int(request.form['hfid'])
+  gid = int(request.form['hgid'])
+  if DEBUG == True:
+    print "POST DATA fid", fid,"gid",gid
+  if count_ticket_remain(fid) == 0:
+    flash(u"票已经售完")
+    return redirect(url_for('flight_manage'))
+
+  #Book a ticket
+  bid = book_a_flight(gid,fid)
+  if DEBUG == True:
+      print "Ticket Booked, bid",bid
+  if bid == None:
+    flash(u"订票时出现未知错误，请联系管理员")
+    return redirect(url_for('flight_manage'))
+
+  flash(u"订票成功")
+  binfo = load_book_by_id(int(bid))
+  if binfo == None:
+    print "Critical Error in book_ticket_view2"
+    return redirect(url_for('flight_manage'))
+
+  msg = load_env()
+  srow = binfo.pos / 9
+  scol = binfo.pos % 9
+  msg['srow'] = srow
+  msg['scol'] = scol
+  msg['ticket'] = base64.b64encode(str(binfo.tid + 5))
+  msg['remind'] = base64.b64encode(str(binfo.rid))
+  return render_template("remind.html",msg = msg)
+
 
 
 
@@ -261,6 +297,7 @@ app.add_url_rule('/about/','about' , about_view)
 app.add_url_rule('/flight_manage/', 'flight_manage' , flight_manage_view)
 app.add_url_rule('/flight_manage_add/', 'flight_manage_add', flight_manage_add, methods=['GET', 'POST'])
 app.add_url_rule('/flight_manage_delete', 'flight_manage_delete', flight_manage_del, methods=['GET', 'POST'])
+app.add_url_rule('/book_ticket_view', 'book_ticket_view', book_ticket_view, methods=['GET', 'POST'])
 
 # Secret key needed to use sessions.
 app.secret_key = 'mysecretkey'

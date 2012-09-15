@@ -86,13 +86,14 @@ class Flight_Guest(object):
     return self.name
 
 class Flight_Book_Item(object):
-  def __init__(self, id, gid, fid, sid, tid, rid, ispay, isget):
+  def __init__(self, id, gid, fid, sid, tid, rid, pos,ispay, isget):
     self.id = id
     self.gid = gid
     self.fid = fid
     self.sid = sid
     self.tid = tid
     self.rid = rid
+    self.pos = pos
     self.ispay = ispay
     self.isget = isget
 
@@ -339,7 +340,7 @@ def list_seat_not_avail(fid):
   result = db_connect.execute(s)
   if result.rowcount == 0:
     result.close()
-    return None
+    return []
   retlist = []
   row = result.fetchone()
   while row != None:
@@ -569,6 +570,48 @@ def delete_a_book(bid):
     return None
   return 1
 
+def load_book_by_id(bid):
+  '''Load Book Info from database by id'''
+  s = select([db_booktable], and_(db_booktable.c.id == bid))
+  result = db_connect.execute(s)
+  if result.rowcount == 0:
+    result.close()
+    return None
+  row = result.first()
+  bsid = row['sid']
+  btid = row['tid']
+  brid = row['rid']
+
+  if(bsid == None) or (btid == None) or (brid == None):
+    print "Critical Error in Relation At load_book_by_id"
+    return None
+
+  s = select([db_flight_seat], and_(db_flight_seat.c.id == bsid))
+  tresult = db_connect.execute(s)
+  trow = tresult.first()
+  tpos = trow['pos']
+  s = select([db_tickettable], and_(db_tickettable.c.id == btid))
+  sresult = db_connect.execute(s)
+  srow = sresult.first()
+  sispay = srow['ispay']
+  s = select([db_remindtable], and_(db_remindtable.c.id == brid))
+  rresult = db_connect.execute(s)
+  rrow = rresult.first()
+  risget = rrow['isget']
+
+  ret = Flight_Book_Item(
+    id = bid,
+    gid = row['gid'],
+    fid = row['fid'],
+    sid = row['sid'],
+    tid = row['tid'],
+    rid = row['rid'],
+    pos = tpos,
+    isget = risget,
+    ispay = risget,
+    )
+  return ret
+
 
 
 
@@ -617,8 +660,10 @@ if __name__ == "__main__":
   # print retdict[1].name
   # print len(retdict)
 
-  ret = delete_a_book(1)
+  ret = book_a_flight(1,1)
   print ret
+  retl = load_book_by_id(int(ret))
+  print "Info:", retl.fid, retl.isget, retl.ispay, retl.pos
 
 
 #Load Table From Database complete
