@@ -67,9 +67,42 @@ class Flight_Time(object):
 
 class Flight_Day(object):
   def __init__(self, day, month, year):
+    d31 = [1,3,5,7,8,10,12]
+    d30 = [4,6,9,11]
+    d29 = [2]
+    month = month % 12
+    if month in d31:
+      day = day % 31
+    if month in d30:
+      day = day % 30
+    if month in d29:
+      day = day % 29
     self.day = day
     self.month = month
     self.year =year
+
+  def prior(self):
+    '''Priorior a day'''
+    d31 = [1,3,5,7,8,10,12]
+    d30 = [4,6,9,11]
+    d29 = [2]
+    if self.day > 1:
+      self.day = self.day -1
+      return None
+    if self.day == 1:
+      self.month = self.month -1
+      if self.month == 0:
+        self.year = self.year -1
+        self.month = 12
+      if self.month in d31:
+        self.day = 31
+      if self.month in d30:
+        self.day = 30
+      if self.month in d29:
+        self.day = 29
+    return None
+
+
 
 class Flight_City(object):
   def __init__(self, id, name):
@@ -86,19 +119,21 @@ class Flight_Guest(object):
     return self.name
 
 class Flight_Book_Item(object):
-  def __init__(self, id, gid, fid, sid, tid, rid, pos,ispay, isget):
+  def __init__(self, id, guestinfoc, finfoc, sid, tid, rid, pos, srow, scol,ispay, isget):
     self.id = id
-    self.gid = gid
-    self.fid = fid
+    self.guestinfoc = guestinfoc
+    self.finfoc = finfoc
     self.sid = sid
     self.tid = tid
     self.rid = rid
     self.pos = pos
+    self.srow = srow
+    self.scol = scol
     self.ispay = ispay
     self.isget = isget
 
 
-engine = create_engine('mysql://bootstrap:boot@127.0.0.1/dbproj?charset=utf8', echo=True, encoding='utf8' )
+engine = create_engine('mysql://bootstrap:boot@127.0.0.1/dbproj?charset=utf8', echo=False, encoding='utf8' )
 
 Base = declarative_base()
 metadata = MetaData(bind = engine)
@@ -590,10 +625,12 @@ def load_book_by_id(bid):
   tresult = db_connect.execute(s)
   trow = tresult.first()
   tpos = trow['pos']
+  srow = tpos / 9  
+  scol = tpos % 9
   s = select([db_tickettable], and_(db_tickettable.c.id == btid))
   sresult = db_connect.execute(s)
-  srow = sresult.first()
-  sispay = srow['ispay']
+  ssrow = sresult.first()
+  sispay = ssrow['ispay']
   s = select([db_remindtable], and_(db_remindtable.c.id == brid))
   rresult = db_connect.execute(s)
   rrow = rresult.first()
@@ -601,18 +638,53 @@ def load_book_by_id(bid):
 
   ret = Flight_Book_Item(
     id = bid,
-    gid = row['gid'],
-    fid = row['fid'],
+    guestinfoc = load_guest_by_id(int(row['gid'])),
+    finfoc = load_flight_by_id(int(row['fid'])),
     sid = row['sid'],
     tid = row['tid'],
     rid = row['rid'],
     pos = tpos,
+    srow = srow,
+    scol = scol,
     isget = risget,
     ispay = risget,
     )
   return ret
 
+def load_book_items_by_gid(gid):
+  '''Load book items from book table by guest id. Return a dict'''
+  retdict = {}
+  s = select([db_booktable], and_(db_booktable.c.gid == gid))
+  result = db_connect.execute(s)
+  if result.rowcount == 0:
+    result.close()
+    return retdict
+  row = result.fetchone()
+  while row != None:
+    bid = row['id']
+    bookinfoc = load_book_by_id(bid)
+    retdict[bookinfoc.id] = bookinfoc
+    row = result.fetchone()
+  result.close()
+  return retdict
 
+def load_book_items_by_fid(fid):
+  '''Load book items from book table by flight id. Return a dict'''
+  retdict = {}
+  s = select([db_booktable], and_(db_booktable.c.fid == fid))
+  result = db_connect.execute(s)
+  if result.rowcount == 0:
+    result.close()
+    return retdict
+  row = result.fetchone()
+  while row != None:
+    bid = row['id']
+    bookinfoc = load_book_by_id(bid)
+    retdict[bookinfoc.id] = bookinfoc
+   # print bookinfoc.srow, bookinfoc.pos
+    row = result.fetchone()
+  result.close()
+  return retdict
 
 
 def verify_admin(name, password):
@@ -660,10 +732,12 @@ if __name__ == "__main__":
   # print retdict[1].name
   # print len(retdict)
 
-  ret = book_a_flight(1,1)
-  print ret
-  retl = load_book_by_id(int(ret))
-  print "Info:", retl.fid, retl.isget, retl.ispay, retl.pos
+  retl = load_book_by_id(1)
+  print "Info:", retl.ispay, retl.pos, retl.guestinfoc.name, retl.finfoc.fname
+  retd = load_book_items_by_gid(1)
+  for item in retd:
+    print "item:", item, retd[item].id, retd[item].guestinfoc.name
+
 
 
 #Load Table From Database complete

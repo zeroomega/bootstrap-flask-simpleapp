@@ -249,12 +249,49 @@ def book_ticket_view():
   srow = binfo.pos / 9
   scol = binfo.pos % 9
   msg['srow'] = srow
+  finfoc = load_flight_by_id(fid)
+  reminddate = finfoc.fsetday
+  reminddate.prior()
   msg['scol'] = scol
   msg['ticket'] = base64.b64encode(str(binfo.tid + 5))
   msg['remind'] = base64.b64encode(str(binfo.rid))
+  msg['reminddate'] = reminddate
   return render_template("remind.html",msg = msg)
 
+def flight_info_view():
+  '''Display details of a flight'''
+  if current_user.is_anonymous():
+    return redirect(url_for('login'))
+  if request.method == 'GET':
+    fid = int(request.args['fid'])
+  if request.method == 'POST':
+    fid = int(request.form['fid'])
+  msg = load_env()  
+  finfoc = load_flight_by_id(fid)
+  ticket_remain = count_ticket_remain(fid)
+  fullrate =1 - float(ticket_remain) / float(finfoc.fseat) 
+  fullrate = fullrate * 100
+  rawstr = str(fullrate)
+  rawstr = rawstr[0:rawstr.index('.')+2] + '%'
+  msg['finfoc'] = finfoc
+  msg['ticket_remain'] = ticket_remain
+  msg['fullrate'] = rawstr
+  tdict = load_book_items_by_fid(fid)
+  msg['tdict'] =tdict
+  return render_template("view_flight.html",msg = msg)
 
+def book_revoke_view():
+  '''This method revoke a book action in book table'''
+  if request.method == 'GET':
+    bid = request.args['bid']
+  if request.method == 'POST':
+    bid = request.form['bid']
+  ret = delete_a_book(int(bid))
+  if ret == 1:
+    flash(u"退订成功")
+    return redirect(request.referrer)
+  print ret
+  return redirect(request.referrer)
 
 
 def user_create():
@@ -298,6 +335,8 @@ app.add_url_rule('/flight_manage/', 'flight_manage' , flight_manage_view)
 app.add_url_rule('/flight_manage_add/', 'flight_manage_add', flight_manage_add, methods=['GET', 'POST'])
 app.add_url_rule('/flight_manage_delete', 'flight_manage_delete', flight_manage_del, methods=['GET', 'POST'])
 app.add_url_rule('/book_ticket_view', 'book_ticket_view', book_ticket_view, methods=['GET', 'POST'])
+app.add_url_rule('/flight_info','flight_info',flight_info_view, methods=['GET', 'POST'])
+app.add_url_rule('/book_revoke_view','book_revoke_view',book_revoke_view, methods=['GET', 'POST'])
 
 # Secret key needed to use sessions.
 app.secret_key = 'mysecretkey'
