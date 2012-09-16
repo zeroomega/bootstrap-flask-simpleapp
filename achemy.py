@@ -478,7 +478,7 @@ def revoke_a_remind(rid):
   '''Revoke a remind from remind_table'''
   if type(rid) != int:
     return None
-  alt = db_remindtable.update().where(db_tickettable.c.id == rid).values(isget = 1)
+  alt = db_remindtable.update().where(db_remindtable.c.id == rid).values(isget = 1)
   try:
     result = db_connect.execute(alt)
   except Exception, e:
@@ -631,10 +631,15 @@ def load_book_by_id(bid):
   sresult = db_connect.execute(s)
   ssrow = sresult.first()
   sispay = ssrow['ispay']
+  if DEBUG == True:
+    print "id:",ssrow['id'], "ispay",sispay
+
   s = select([db_remindtable], and_(db_remindtable.c.id == brid))
   rresult = db_connect.execute(s)
   rrow = rresult.first()
   risget = rrow['isget']
+  if DEBUG == True:
+    print "id:",rrow['id'], "isget",risget
 
   ret = Flight_Book_Item(
     id = bid,
@@ -646,7 +651,7 @@ def load_book_by_id(bid):
     pos = tpos,
     srow = srow,
     scol = scol,
-    isget = risget,
+    isget = sispay,
     ispay = risget,
     )
   return ret
@@ -686,6 +691,18 @@ def load_book_items_by_fid(fid):
   result.close()
   return retdict
 
+def load_book_by_tid_rid(tid,rid):
+  '''Load book item by tid and rid, return a book item or None'''
+  tid = int(tid)
+  rid = int(rid)
+  s = select([db_booktable], and_(db_booktable.c.tid == tid, db_booktable.c.rid == rid))
+  result = db_connect.execute(s)
+  if result.rowcount == 0:
+    result.close()
+    return None
+  row = result.first()
+  bid = row['id']
+  return load_book_by_id(bid)
 
 def verify_admin(name, password):
   '''Verify the Administrator User from database'''

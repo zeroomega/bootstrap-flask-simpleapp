@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome Inside!{% endblock %}
+
+{% block User %}
+{{ msg['username'] }}
+{% endblock %}
+
+{% block main %}
+ 
+    <div class="span9">
+      <h1>在线取票</h1>
+      <hr/>
+      <form method="POST" action="/get_ticket_action">
+        <label>请输入取票号：</label>
+        <input name="rid" type="text" placeholder="示例:MQ==" value="" />
+        <br/>
+        <label>请输入账单号：</label>
+        <input name="tid" type="text" placeholder="示例:MQ==" value="" />
+        <br/>
+        <input class="btn" type="submit" value="取票" />
+      </form>
+      
+    </div>
+
+{% endblock %}

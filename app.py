@@ -256,6 +256,33 @@ def book_ticket_view():
   msg['ticket'] = base64.b64encode(str(binfo.tid + 5))
   msg['remind'] = base64.b64encode(str(binfo.rid))
   msg['reminddate'] = reminddate
+  msg['money'] = finfoc.fprice
+  return render_template("remind.html",msg = msg)
+
+def ticket_info_view():
+  '''This method display the ticket info of the user'''
+  if request.method == "GET":
+    bid = request.args['bid']
+  if request.method == "POST":
+    bid = request.form['bid']
+  binfo = load_book_by_id(int(bid))
+  if binfo == None:
+    print "Critical Error in ticket_info_view"
+    return redirect(url_for('flight_manage'))
+  msg = load_env()
+  srow = binfo.pos / 9
+  scol = binfo.pos % 9
+  msg['srow'] = srow
+  finfoc = binfo.finfoc
+  reminddate = finfoc.fsetday
+  reminddate.prior()
+  msg['scol'] = scol
+  #IS Paid
+  msg['ticket'] = base64.b64encode(str(binfo.tid + 5))
+  #IS Get
+  msg['remind'] = base64.b64encode(str(binfo.rid))
+  msg['reminddate'] = reminddate
+  msg['money'] = finfoc.fprice
   return render_template("remind.html",msg = msg)
 
 def flight_info_view():
@@ -292,6 +319,41 @@ def book_revoke_view():
     return redirect(request.referrer)
   print ret
   return redirect(request.referrer)
+
+def get_ticket_view():
+  '''Display Get A Ticket '''
+  if current_user.is_anonymous():
+    return redirect(url_for('login'))
+  msg = load_env()
+  return render_template("get_ticket.html", msg = msg)
+
+def get_ticket_action():
+  '''Get A Ticket by tid & bid'''
+  if current_user.is_anonymous():
+    return redirect(url_for('login'))
+  msg = load_env()
+  if request.method == "GET":
+    return render_template('view_ticket.html', msg = msg)
+  if request.method == "POST":
+    b64tid = request.form['tid']
+    b64rid= request.form['rid']
+    tid = int(base64.b64decode(b64tid)) - 5
+    rid = int(base64.b64decode(b64rid))
+    bookinfoc = load_book_by_tid_rid(tid,rid)
+    if bookinfoc == None:
+      flash(u"您输入的信息有误，请重试")
+      return render_template("get_ticket.html", msg = msg)
+    #Get the bookinfoc
+    if (bookinfoc.isget == 1) or (bookinfoc.ispay == 1):
+      flash(u"您已经取票过了")
+    else:
+      flash(u"取票成功")
+    pay_a_ticket(tid)
+    revoke_a_remind(rid)
+    msg['bookinfoc'] = bookinfoc
+    code = base64.b64encode(str(bookinfoc.id))
+    msg['code'] = code
+    return render_template("view_ticket.html", msg = msg)
 
 
 def user_create():
@@ -337,6 +399,10 @@ app.add_url_rule('/flight_manage_delete', 'flight_manage_delete', flight_manage_
 app.add_url_rule('/book_ticket_view', 'book_ticket_view', book_ticket_view, methods=['GET', 'POST'])
 app.add_url_rule('/flight_info','flight_info',flight_info_view, methods=['GET', 'POST'])
 app.add_url_rule('/book_revoke_view','book_revoke_view',book_revoke_view, methods=['GET', 'POST'])
+app.add_url_rule('/ticket_info_view','ticket_info_view',ticket_info_view, methods=['GET', 'POST'])
+app.add_url_rule('/get_ticket_view','get_ticket_view',get_ticket_view, methods=['GET', 'POST'])
+app.add_url_rule('/get_ticket_action','get_ticket_action',get_ticket_action, methods=['GET', 'POST'])
+
 
 # Secret key needed to use sessions.
 app.secret_key = 'mysecretkey'

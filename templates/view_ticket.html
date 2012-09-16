@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome Inside!{% endblock %}
+
+{% block User %}
+{{ msg['username'] }}
+{% endblock %}
+
+{% block main %}
+ 
+    <div class="span9">
+      <h1>在线取票</h1>
+      <hr/>
+      <div class="well">
+        <big><strong>航班名称:</strong>{{msg.bookinfoc.finfoc.fname}} &nbsp&nbsp <strong>座位:</strong>{{msg.bookinfoc.srow}}排{{ msg.bookinfoc.scol }}座 <strong> &nbsp&nbsp 编号:</strong>{{ msg.code }} </big><br/><br/>
+        <big><strong>起飞时间:</strong>{{ msg.bookinfoc.finfoc.fset }}<strong> &nbsp&nbsp 飞行时间:</strong>{{msg.bookinfoc.finfoc.fdur}} <strong> &nbsp&nbsp 到达时间:</strong>{{msg.bookinfoc.finfoc.farr}}</big><br/><br/>
+        <big><strong>起飞日期:</strong>{{msg.bookinfoc.finfoc.fsetday.year}}年{{msg.bookinfoc.finfoc.fsetday.month}}月{{ msg.bookinfoc.finfoc.fsetday.day }}日</big>
+        
+      </div>
+      
+    </div>
+
+{% endblock %}

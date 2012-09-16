@@ -15,14 +15,17 @@
         <div class="well" >
           <p>{{ msg.srow }}排{{ msg.scol }}座</p>
         </div>
-        <p>您的账单号为:</p>
-        <div class="well" >
-          <p>{{ msg.ticket }}</p>
-        </div>
         <p>您的取票号为:</p>
         <div class="well" >
-          <p>{{ msg.remind}}</p>
+          <!-- ISGET -->
+          <p>{{ msg.remind }}</p>
         </div>
+        <p>您的账单号为:</p>
+        <div class="well" >
+          <!-- ISPAID -->
+          <p>{{ msg.ticket}}</p>
+        </div>
+        <p>需支付: ￥{{msg.money}}</p>
         <p>请在{{ msg.reminddate.year}}年{{ msg.reminddate.month }}月{{ msg.reminddate.day}}日之前取票</p>
       </div>
      </div>
