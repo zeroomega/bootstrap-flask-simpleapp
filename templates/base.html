@@ -63,10 +63,10 @@
             <span class="icon-bar"></span> 
             <span class="icon-bar"></span> 
           </a> 
-          <a class="brand" href="#">航班管理系统</a> 
+          <a class="brand" href="/">航班管理系统</a> 
           <div class="nav-collapse"> 
             <ul class="nav"> 
-              <li class="active">
+              <li {% if msg.header == 'home' %}class="active" {% endif %}>
                 {% if msg %}
                   {% if msg.is_login %}
                     <a href="/home">首页</a>
@@ -77,11 +77,13 @@
                   <a href="/">首页</a>
                 {% endif %}
               </li> 
-              <li><a href="/about/">关于</a></li> 
+              <li {% if msg.header == 'about' %}class="active" {% endif %}>
+                <a href="/about/">关于</a>
+              </li> 
               <!-- Contact is not necessary
               <li><a href="#contact">Contact</a></li>
               -->
-              <li>
+              <li {% if (msg.header == 'login') or (msg.header == 'logout') %}class="active" {% endif %} >
                 {% if msg %}
                   {% if msg.is_login %}
                     <a href="/logout/">登出</a>
@@ -118,7 +120,7 @@
               {# Login User is an Admin #}
               		<li class="nav-header">航班管理</li>
     		          <li><a href="/flight_manage/">航班信息管理</a></li>
-              		<li><a href="#">售票</a></li>
+              		<li><a href="/sell_ticket_view">售票</a></li>
                   <li><a href="/get_ticket_view">取票</a></li>		
               		<li class="nav-header">乘客管理</li>
                		<li><a href="#">乘客信息管理</a></li>              		

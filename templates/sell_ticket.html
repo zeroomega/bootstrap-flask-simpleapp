@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}机票销售{% endblock %}
+
+{% block User %}
+{{ msg['username'] }}
+{% endblock %}
+
+{% block main %}
+ 
+    <div class="span9">
+      <h1>售票</h1>
+      <hr/>
+      <form method="POST"> 
+        <label>乘客:</label>
+        {% if msg.is_admin %}
+        <select id="gid" name="gid">
+          {% for item in msg.guestdic %}
+            <option value="{{ item }}">{{ msg.guestdic[item] }}</option>
+          {% endfor %}
+        </select>
+        {% endif %}
+        <span class="help-block">此处用来选择乘客</span>
+        <br/>
+        <select id="ffrom" name="ffrom">
+          {% for item in msg.citydic %}
+            <option value="{{ item }}">{{msg.citydic[item].name }}</option>
+          {% endfor %}
+          <option value="65535" selected="1">未指定</option>
+        </select>
+        <select id="fto" name="fto">
+          {% for item in msg.citydic %}
+            <option value="{{ item }}">{{msg.citydic[item].name}}</option>
+          {% endfor %}
+          <option value="65535">未指定</option>
+        </select>
+        <button class="btn btn-primary" type="submit">搜索</button>
+        <span class="help-block">选择往返地</span>
+      </form>
+      <hr/>
+      <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th>航班名称</th>
+              <th>始发地</th>
+              <th>目的地</th>
+              <th>起飞时间</th>
+              <th>飞行时间</th>
+              <th>着陆时间</th>
+              <th>日期</th>
+              <th>价格</th>
+              <th>座位数</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            {% if msg.flightlist != None %}
+              {% for item in msg.flightlist %}
+                <tr>
+                  <td>{{ item.fname }}</td>
+                  <td>{{ item.ffrom.name }}</td>
+                  <td>{{ item.fto.name }}</td>
+                  <td>
+                    {{ item.fset }}
+                  </td>
+                  <td>
+                    {{ item.fdur }}
+                  </td>
+                  <td>
+                    {{ item.farr }}
+                  </td>
+                  <td>
+                    {{ item.fsetday.year }}年{{ item.fsetday.month }}月{{ item.fsetday.day }}日
+                  </td>
+                  <td>￥{{ item.fprice }}</td>
+                  <td>{{ item.fseat }}</td>
+                  <td>
+                    
+                      <div class="btn-group">
+                        <!-- <a class="btn btn-mini">编辑</a> -->                        
+                        <button class="btn btn-mini" onclick="book_ticket({{ item.id }})">买票</button>
+                        
+                      </div>
+                  </td>  
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      <form id="bookaction" method='POST' action="book_ticket_view">
+        <input id="hgid" name="hgid" type="hidden" value="" />
+        <input id="hfid" name="hfid" type="hidden" value="" />
+      </from>
+    </div>
+    <script type="text/javascript">
+    effrom = document.getElementById('ffrom')
+    efto = document.getElementById('fto')
+    eid = document.getElementById('gid')
+    effrom.value = {{ msg.effrom }}
+    efto.value = {{ msg.efto }}
+    eid.value = {{ msg.eid }}
+    function book_ticket(pfid){
+      epgid = document.getElementById("gid")
+      ehgid = document.getElementById('hgid')
+      ehfid = document.getElementById('hfid')
+      subform = document.getElementById('bookaction')
+      ehgid.value = epgid.value
+      ehfid.value = pfid
+      subform.submit()
+    }
+
+    </script>
+
+{% endblock %}

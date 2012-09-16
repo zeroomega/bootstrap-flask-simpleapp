@@ -42,9 +42,9 @@ def shutdown_session(exception=None):
 
 def load_env():
   if current_user.is_anonymous():
-      msg = {'is_admin':False, 'is_login':False, 'username': current_user.name}
+    msg = {'is_admin':False, 'is_login':False, 'username': current_user.name,'header':''}
   else:
-      msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name}
+    msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'uid': current_user.id,'header':''}
   return msg
 
 def index():
@@ -53,48 +53,37 @@ def index():
   # else:
   #   msg = {'is_admin':current_user.is_admin, 'is_login':True}
   msg = load_env()
+  msg['header'] = 'home'
   print msg
   return render_template('index.html',msg = msg)
-
-    
-def loaduid(uid):
-  '''Load User by UID from database '''
-  pass
-
-def verify_user(name, password):
-  '''Verify the guest user from database'''
-  pass
- 
   
 ##login methods
 
 
 
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        login_type = request.form['type']
-        if DEBUG == True:
-	  print "debug: Username = ", username
-	  print "debug: Password = ", password
-	  print "debug: login_type = ", login_type
-	  
-	if login_type == 'admin':
-	  user = verify_admin(username,password)
-	  if user == None:
-	    #Login Incorrect
-	    flash(u"用户名或密码错误")
-	    return render_template('login.html')
-	  else:
-	    #Login Correct
-	    if login_user(user, remember = True):
-	      if DEBUG == True:
-		print 'Login Successful'
-	      return redirect(url_for('home'))
-
-    else:
-      return render_template('login.html')
+  '''Login Page'''
+  msg = load_env()
+  msg['header'] = 'login'
+  if request.method == "POST":
+    username = request.form['username']
+    password = request.form['password']
+    login_type = request.form['type']
+    
+    if login_type == 'admin':
+      user = verify_admin(username,password)      
+      if user == None:
+        #Login Incorrect
+        flash(u"用户名或密码错误")
+        return render_template('login.html', msg = msg)
+      else:
+        #Login Correct
+        if login_user(user, remember = True):
+          if DEBUG == True:
+            print 'Login Successful'
+        return redirect(url_for('home'))
+  if request.method == "GET":
+    return render_template('login.html', msg = msg)
        
 
 #@login_required()
@@ -104,6 +93,7 @@ def home():
       return redirect(url_for('login'))
     else:
       msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name}
+      msg['header']='home'
       return render_template('home.html', msg=msg)
 
 def flight_manage_view():
@@ -355,6 +345,43 @@ def get_ticket_action():
     msg['code'] = code
     return render_template("view_ticket.html", msg = msg)
 
+def sell_ticket_view():
+  '''This method help a user choose a flight and book a ticket'''
+  if current_user.is_anonymous():
+    return redirect(url_for('login'))
+  msg = load_env()
+  citydic = load_cities()
+  msg['citydic'] = citydic
+  guestdic = load_all_guests()
+  msg['guestdic'] = guestdic
+    
+  if request.method == 'GET':
+    flightdic = load_all_flight()
+    msg['flightlist'] = flightdic
+    msg['effrom'] = 65535
+    msg['efto'] = 65535
+    msg['eid'] = 1
+    return render_template('sell_ticket.html',msg = msg)
+  if request.method == 'POST':
+    gid = int(request.form['gid'])
+    effrom = int(request.form['ffrom'])
+    efto = int(request.form['fto'])
+    if effrom == 65535:
+      ffrom = None
+    else:
+      ffrom = effrom
+    if efto == 65535:
+      fto = None
+    else:
+      fto = efto
+    flightdic = query_flight_id(ffrom = ffrom, fto = fto)
+    msg['flightlist'] = flightdic
+    msg['effrom'] = effrom
+    msg['efto'] = efto
+    msg['eid'] = gid
+
+  return render_template('sell_ticket.html',msg = msg)
+
 
 def user_create():
 #    if request.method == 'POST':
@@ -384,6 +411,7 @@ def logout_view():
        
 def about_view():
   msg = load_env()
+  msg['header']='about'
   return render_template('about.html', msg = msg)
 
 # URLs
@@ -402,6 +430,7 @@ app.add_url_rule('/book_revoke_view','book_revoke_view',book_revoke_view, method
 app.add_url_rule('/ticket_info_view','ticket_info_view',ticket_info_view, methods=['GET', 'POST'])
 app.add_url_rule('/get_ticket_view','get_ticket_view',get_ticket_view, methods=['GET', 'POST'])
 app.add_url_rule('/get_ticket_action','get_ticket_action',get_ticket_action, methods=['GET', 'POST'])
+app.add_url_rule('/sell_ticket_view','sell_ticket_view',sell_ticket_view, methods=['GET', 'POST'])
 
 
 # Secret key needed to use sessions.

@@ -336,6 +336,46 @@ def alter_flight_info(altfs):
   
   return result
 
+def query_flight_id(ffrom = None, fto = None):
+  '''This method query filght info by cities. return a list'''
+  citydic = load_cities()
+  retlist = []
+  if (ffrom == None ) and (fto == None):
+    return load_all_flight()
+  if (ffrom != None) and (fto == None):
+    s = select([db_flight_info], and_(db_flight_info.c.cfrom == int(ffrom)))
+  if (ffrom == None) and (fto != None):
+    s = select([db_flight_info], and_(db_flight_info.c.cto == int(fto)))
+  if (ffrom != None) and (fto != None):
+    s = select([db_flight_info], and_(db_flight_info.c.cfrom == int(ffrom),db_flight_info.c.cto == int(fto)))
+  result = db_connect.execute(s)
+  if result.rowcount != 0:
+    #The Database contain Flight Data
+    row = result.fetchone()
+    while row != None:
+      curfrom = citydic[row['cfrom']]
+      curto = citydic[row['cto']]
+      cursettime = Flight_Time(row['set_min'], row['set_hour'])
+      curdurtime = Flight_Time(row['dur_min'], row['dur_hour'])
+      arrmin = (cursettime.min + curdurtime.min) % 60
+      arrhour = (cursettime.hour + curdurtime.hour) + (cursettime.min + curdurtime.min) / 60
+      arrhour = arrhour % 24
+      curarrtime = Flight_Time(arrmin, arrhour)
+      curday = Flight_Day(row['set_day'], row['set_mon'], row['set_year'])
+      curflight = Flight_Infoc(
+        id = row['id'], 
+        fname = row['flight'], 
+        ffrom = curfrom, 
+        fto = curto, 
+        fset = cursettime,
+        fdur = curdurtime,
+        farr = curarrtime,
+        fsetday = curday,
+        fprice = row['price'],
+        fseat = row['seat'])
+      retlist.append(curflight)
+      row = result.fetchone()
+  return retlist
 
 
 def delete_flight_id(fid):
