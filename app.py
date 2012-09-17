@@ -82,6 +82,19 @@ def login():
           if DEBUG == True:
             print 'Login Successful'
         return redirect(url_for('home'))
+    if login_type == 'guest':
+      user = verify_guest(username, password)
+      if user == None:
+        #Login Incorrect
+        flash(u"用户名或密码错误")
+        return render_template('login.html', msg = msg)
+      else:
+        #Login Correct
+        if login_user(user, remember = True):
+          if DEBUG == True:
+            print 'Login Successful'
+        return redirect(url_for('home'))
+
   if request.method == "GET":
     return render_template('login.html', msg = msg)
        
@@ -384,16 +397,37 @@ def sell_ticket_view():
 
 
 def user_create():
-#    if request.method == 'POST':
-#        username = request.form['username']
-#        if User.query.filter(User.username==username).first():
-#            return 'User already exists.'
-#        password = request.form['password']
-#        user = User(username=username, password=password)
-#        db.session.add(user)
-#        db.session.commit()
-#        return redirect(url_for('index'))
-    return render_template('user_create.html')
+  msg = load_env()
+  msg['username'] = ""
+  msg['email'] = ""
+  if request.method == 'GET':
+    return render_template('user_create.html', msg = msg)
+  if request.method == 'POST':
+    username = request.form['username']
+    password = request.form['password']
+    password2 = request.form['password2']
+    email = request.form['email']
+    msg['username'] = username
+    msg['email'] = email
+    if password2 != password:
+      flash(u"两次密码不一致")
+      return render_template('user_create.html', msg = msg)
+    #proceed Insert
+    ret = add_guest(
+      username = username,
+      password = password,
+      email = email)
+    if ret == None:
+      flash(u"用户名重复")
+      return render_template('user_create.html', msg = msg)
+    flash(u"注册成功")
+    logout_user()
+    user = verify_guest(username, password)
+    login_user(user,remember = True)
+
+    return redirect(url_for('home'))
+    return render_template('user_create.html', msg = msg)
+
 
 def logout_view():
   if DEBUG:

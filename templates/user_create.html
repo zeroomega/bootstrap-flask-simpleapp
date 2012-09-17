@@ -1,5 +1,39 @@
-<form method="POST">
-    Username: <input type="text" name="username"/><br/>
-    Password: <input type="password" name="password"/><br/>
-    <input type="submit" value="Create"/>
-</form>
+{% extends "base.html" %}
+
+{% block title %}欢迎{% endblock %}
+
+{% block User %}
+{{ msg['username'] }}
+{% endblock %}
+
+{% block main %}
+ 
+    <div class="span9">
+      <!-- Main hero unit for a primary marketing message or call to action --> 
+      
+      <h1>旅客注册</h1>
+      <hr/>
+      <form id="reg" method="POST">
+      	<span class="help-block">在这里你可以注册一个新的旅客</span>
+      	<label>用户名:</label>
+      	<input type="text" id="username" name="username" placeholder="Alpha" value="{{ msg.username }}"/>
+      	<span class="help-block">在这里你可以注册一个新的旅客</span>
+      	<label>密码:</label>
+      	<input type="password" id="password" name="password" placeholder="" />
+      	<label>再输入一次:</label>
+      	<input type="password" id="password2" name="password2" placeholder="" />
+      	<label>E-Mail</label>
+      	<input type="text" id="email" name="email" placeholder="123@abc.com" value="{{ msg.email }}" />      	
+      </form>
+      <button class="btn btn-primary" onclick="register()">注册</button>
+
+      <script type="text/javascript">
+      	function register(){
+      		eform = document.getElementById("reg")
+      		eform.submit()
+      	}
+      </script>
+
+     </div>
+
+{% endblock %}

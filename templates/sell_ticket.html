@@ -12,15 +12,19 @@
       <h1>售票</h1>
       <hr/>
       <form method="POST"> 
-        <label>乘客:</label>
         {% if msg.is_admin %}
+        <label>乘客:</label>
+        
         <select id="gid" name="gid">
           {% for item in msg.guestdic %}
             <option value="{{ item }}">{{ msg.guestdic[item] }}</option>
           {% endfor %}
         </select>
-        {% endif %}
+        
         <span class="help-block">此处用来选择乘客</span>
+        {% else %}
+        <input id="gid" name="gid" type="hidden" value="{{ msg.uid }}"
+        {% endif %}
         <br/>
         <select id="ffrom" name="ffrom">
           {% for item in msg.citydic %}

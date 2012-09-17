@@ -763,6 +763,42 @@ def verify_admin(name, password):
     result.close()
     return None
     
+def verify_guest(name, password):
+  '''Verify the Guest User from database'''
+  s = select([db_guest], and_(db_guest.c.username == name, db_guest.c.password == password))
+  result = db_connect.execute(s)
+  #Get Database Query Results
+  if result.rowcount != 0:
+    #Guest Verify OK
+    row = result.first()
+    ret = User(name = row['username'], id = row['username'], is_admin = False, uid = row['id']);
+    if ret not in lg_userlist:
+      lg_userlist.append(ret)
+    if DEBUG == True:
+      print 'Verify OK: Guest:', ret.name
+    return ret
+  else:
+    #Guest Verify Faild. Login incorrect
+    result.close()
+    return None
+
+def add_guest(username, password, email):
+  '''Add a new user'''
+  if (username == None) or (password == None) or ( email == None):
+    return None
+  ins = db_guest.insert().values(
+    username = username,
+    password = password,
+    email = email)
+  try:
+    result = db_connect.execute(ins)
+    result.close()
+    return "Insert Successful"
+
+  except Exception, e:
+    print e
+    return None
+
 
 def load_user(id):
   '''

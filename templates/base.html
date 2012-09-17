@@ -127,14 +127,15 @@
                   
               {% else %}
               {# Login User is a Guest#}
-                <li class="nav-header"><h2>测试</h2></li>
+                <li><a href="/sell_ticket_view">售票</a></li>
+                <li><a href="/get_ticket_view">取票</a></li>    
               {% endif %}
           {% else %}
             {# User is Not Login #}
               <li class="nav-header"><h2>请登录</h2></li>
           {% endif %}
           {% else %}
-          <li class="nav-header"><h2>测试</h2></li>
+          <li class="nav-header"><h2>Error</h2></li>
         {% endif %}
   	      </ul>
   	  </div>
