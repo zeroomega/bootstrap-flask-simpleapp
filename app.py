@@ -44,7 +44,7 @@ def load_env():
   if current_user.is_anonymous():
     msg = {'is_admin':False, 'is_login':False, 'username': current_user.name,'header':''}
   else:
-    msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'uid': current_user.id,'header':''}
+    msg = {'is_admin':current_user.is_admin, 'is_login':True, 'username': current_user.name, 'uid': current_user.uid,'header':''}
   return msg
 
 def index():
@@ -340,8 +340,14 @@ def get_ticket_action():
   if request.method == "POST":
     b64tid = request.form['tid']
     b64rid= request.form['rid']
-    tid = int(base64.b64decode(b64tid)) - 5
-    rid = int(base64.b64decode(b64rid))
+    try:
+      tid = int(base64.b64decode(b64tid)) - 5
+      rid = int(base64.b64decode(b64rid))
+    except Exception, e:
+      print "base64 Decode Error"
+      flash(u"您输入的取票和账单信息有误，请重新输入")
+      return redirect(url_for('get_ticket_view'))
+    
     bookinfoc = load_book_by_tid_rid(tid,rid)
     if bookinfoc == None:
       flash(u"您输入的信息有误，请重试")
@@ -394,6 +400,18 @@ def sell_ticket_view():
     msg['eid'] = gid
 
   return render_template('sell_ticket.html',msg = msg)
+
+def list_ticket_view():
+  '''List the tickets for the guest'''
+  if current_user.is_anonymous():
+    return redirect(url_for('login'))
+  if current_user.is_admin == True:
+    return redirect(url_for('login'))
+  gid = current_user.uid
+  retdict = load_book_items_by_gid(gid)
+  msg = load_env()
+  msg['tdict'] = retdict
+  return render_template('list_ticket.html',msg = msg)
 
 
 def user_create():
@@ -465,6 +483,7 @@ app.add_url_rule('/ticket_info_view','ticket_info_view',ticket_info_view, method
 app.add_url_rule('/get_ticket_view','get_ticket_view',get_ticket_view, methods=['GET', 'POST'])
 app.add_url_rule('/get_ticket_action','get_ticket_action',get_ticket_action, methods=['GET', 'POST'])
 app.add_url_rule('/sell_ticket_view','sell_ticket_view',sell_ticket_view, methods=['GET', 'POST'])
+app.add_url_rule('/list_ticket_view','list_ticket_view',list_ticket_view, methods=['GET', 'POST'])
 
 
 # Secret key needed to use sessions.
